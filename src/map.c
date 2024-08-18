@@ -82,6 +82,10 @@ void map_set(map_t *map, size_t x, size_t y, size_t z, uint8_t block) {
 
 	for (size_t i = 0; i < server.num_clients; i++) {
 		client_t *client = &server.clients[i];
+		if (client->is_alpha) {
+			continue;
+		}
+
 		buffer_write_uint8(client->out_buffer, packet_set_block_server);
 		buffer_write_uint16be(client->out_buffer, x);
 		buffer_write_uint16be(client->out_buffer, y);

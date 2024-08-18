@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include "util.h"
 #include "config.h"
+#include "endian.h"
 #include "log.h"
 
 extern bool args_disable_colour;
@@ -220,4 +221,26 @@ void util_print_strip_colours(FILE *file, const char *msg) {
 	}
 
 	fprintf(file, "\n");
+}
+
+char *util_classic_to_alpha(const char *msg) {
+	char buf[512];
+	size_t bufp = 0;
+
+	size_t originalSize = strlen(msg);
+
+	for (size_t i = 0; i < originalSize; i++) {
+		const char c = msg[i];
+		if (c == '&') {
+			buf[bufp++] = 0xc2;
+			buf[bufp++] = 0xa7;
+			buf[bufp] = 0;
+		}
+		else {
+			buf[bufp++] = c;
+			buf[bufp] = 0;
+		}
+	}
+
+	return strdup(buf);
 }

@@ -43,3 +43,19 @@ enum {
 
 	packet_two_way_ping = 0x2b,
 };
+
+enum {
+	alphapacket_keepalive = 0x00,
+	alphapacket_ident = 0x01,
+	alphapacket_handshake = 0x02,
+	alphapacket_chat = 0x03,
+	alphapacket_world_spawn = 0x06,
+	alphapacket_player = 0x0a,
+	alphapacket_player_pos = 0x0b,
+	alphapacket_player_angle = 0x0c,
+	alphapacket_player_pos_angle = 0x0d,
+	alphapacket_entity_teleport = 0x21,
+	alphapacket_chunk_visibility = 0x32,
+	alphapacket_block_data = 0x33,
+	alphapacket_kick = 0xff,
+};

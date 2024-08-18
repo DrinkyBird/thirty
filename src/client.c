@@ -21,6 +21,9 @@
 #include <math.h>
 #include <stdarg.h>
 #include "client.h"
+
+#include <zlib.h>
+
 #include "server.h"
 #include "buffer.h"
 #include "map.h"
@@ -45,6 +48,7 @@ static void client_receive(client_t *client);
 static void client_login(client_t *client);
 static void client_send(client_t *client, buffer_t *buffer);
 static void client_handle_in_buffer(client_t *client, buffer_t *in_buffer, size_t r);
+static void client_handle_in_buffer_alpha(client_t *client, buffer_t *in_buffer, size_t r);
 static void client_send_level(client_t *client);
 static void client_start_mapsave(client_t *client);
 static void client_start_fast_mapsave(client_t *client);
@@ -116,13 +120,13 @@ void client_tick(client_t *client) {
 			client_flush(client);
 		}
 		else {
-			buffer_write_uint8(client->out_buffer, packet_ping);
+			buffer_write_uint8(client->out_buffer, client->is_alpha ? alphapacket_keepalive : packet_ping);
 			client_flush(client);
 		}
 		client->last_ping = get_time_s();
 	}
 
-	if (client->mapsend_state != mapsend_none) {
+	if (!client->is_alpha && client->mapsend_state != mapsend_none) {
 		if (client->mapsend_state == mapsend_success) {
 			for (int i = 0; i < 4; i++) {
 				if (client->mapgz_buffer == NULL || buffer_size(client->mapgz_buffer) == buffer_tell(client->mapgz_buffer)) {
@@ -166,15 +170,17 @@ void client_tick(client_t *client) {
 						client_flush(client);
 
 						// and inform others about this client
-						buffer_write_uint8(other->out_buffer, packet_player_spawn);
-						buffer_write_uint8(other->out_buffer, client->idx);
-						buffer_write_mcstr(other->out_buffer, client->name, true);
-						buffer_write_int16be(other->out_buffer, util_float2fixed(client->x));
-						buffer_write_int16be(other->out_buffer, util_float2fixed(client->y));
-						buffer_write_int16be(other->out_buffer, util_float2fixed(client->y));
-						buffer_write_int8(other->out_buffer, util_degrees2fixed(client->yaw));
-						buffer_write_int8(other->out_buffer, util_degrees2fixed(client->pitch));
-						client_flush(other);
+						if (!other->is_alpha) {
+							buffer_write_uint8(other->out_buffer, packet_player_spawn);
+							buffer_write_uint8(other->out_buffer, client->idx);
+							buffer_write_mcstr(other->out_buffer, client->name, true);
+							buffer_write_int16be(other->out_buffer, util_float2fixed(client->x));
+							buffer_write_int16be(other->out_buffer, util_float2fixed(client->y));
+							buffer_write_int16be(other->out_buffer, util_float2fixed(client->y));
+							buffer_write_int8(other->out_buffer, util_degrees2fixed(client->yaw));
+							buffer_write_int8(other->out_buffer, util_degrees2fixed(client->pitch));
+							client_flush(other);
+						}
 					}
 
 					client->spawned = true;
@@ -256,6 +262,20 @@ void client_receive(client_t *client) {
 }
 
 void client_handle_in_buffer(client_t *client, buffer_t *in_buffer, size_t r) {
+	{
+		static int i = 0;
+		char fn[512];
+		snprintf(fn, sizeof(fn), "packet_in_%d.bin", i++);
+		FILE *fp = fopen(fn, "wb");
+		fwrite(in_buffer->mem.data, 1, r, fp);
+		fclose(fp);
+	}
+
+	if (client->is_alpha) {
+		client_handle_in_buffer_alpha(client, in_buffer, r);
+		return;
+	}
+
 	while (buffer_tell(in_buffer) < (size_t)r) {
 		uint8_t packet_id;
 		buffer_read_uint8(in_buffer, &packet_id);
@@ -353,6 +373,15 @@ void client_handle_in_buffer(client_t *client, buffer_t *in_buffer, size_t r) {
 
 			case packet_ping: {
 				break;
+			}
+
+			case alphapacket_handshake: {
+				client->is_alpha = true;
+				free(buffer_read_alphastr(client->in_buffer));
+				buffer_write_uint8(client->out_buffer, alphapacket_handshake);
+				buffer_write_alphastr(client->out_buffer, "-");
+				client_handle_in_buffer_alpha(client, in_buffer, r);
+				return;
 			}
 
 			case packet_extinfo: {
@@ -479,21 +508,7 @@ void client_handle_in_buffer(client_t *client, buffer_t *in_buffer, size_t r) {
 				client->yaw = util_fixed2degrees(yaw);
 				client->pitch = util_fixed2degrees(pitch);
 
-				for (size_t i = 0; i < server.num_clients; i++) {
-					client_t *other = &server.clients[i];
-					if (other == client) {
-						continue;
-					}
-
-					buffer_write_uint8(other->out_buffer, packet_player_pos_angle);
-					buffer_write_int8(other->out_buffer, client->idx);
-					buffer_write_int16be(other->out_buffer, util_float2fixed(client->x));
-					buffer_write_int16be(other->out_buffer, util_float2fixed(client->y));
-					buffer_write_int16be(other->out_buffer, util_float2fixed(client->z));
-					buffer_write_int8(other->out_buffer, util_degrees2fixed(client->yaw));
-					buffer_write_int8(other->out_buffer, util_degrees2fixed(client->pitch));
-					client_flush(other);
-				}
+				client_on_move(client);
 
 				break;
 			}
@@ -534,6 +549,224 @@ void client_handle_in_buffer(client_t *client, buffer_t *in_buffer, size_t r) {
 		}
 
 		client->last_receive = get_time_s();
+	}
+}
+
+void client_handle_in_buffer_alpha(client_t *client, buffer_t *in_buffer, size_t r) {
+	while (buffer_tell(in_buffer) < (size_t)r) {
+		uint8_t packet_id;
+		buffer_read_uint8(in_buffer, &packet_id);
+
+		switch (packet_id) {
+			case alphapacket_keepalive: {
+				break;
+			}
+
+			case alphapacket_ident: {
+				int32_t protocol_version;
+				char *name;
+				char *password;
+				int64_t seed;
+				uint8_t dimension;
+
+				buffer_read_int32be(in_buffer, &protocol_version);
+				name = buffer_read_alphastr(in_buffer);
+				password = buffer_read_alphastr(in_buffer);
+				buffer_read_int64be(in_buffer, &seed);
+				buffer_read_uint8(in_buffer, &dimension);
+
+				client->protocol_version = protocol_version;
+
+				strncpy(client->name, name, 64);
+				free(name);
+				free(password);
+
+				buffer_write_uint8(client->out_buffer, alphapacket_ident);
+				buffer_write_int32be(client->out_buffer, client->idx);
+				buffer_write_alphastr(client->out_buffer, "");
+				buffer_write_alphastr(client->out_buffer, "");
+				buffer_write_int64be(client->out_buffer, config.map.seed);
+				buffer_write_uint8(client->out_buffer, 0);
+				client_flush(client);
+
+				const int chunkSizeX = 16;
+				const int chunkSizeY = min(server.map->depth, 128);
+				const int chunkSizeZ = 16;
+				const int chunkSizeTotal = chunkSizeX * chunkSizeY * chunkSizeZ;
+				const int outSize = chunkSizeTotal * 2.5;
+				const int outSizeZ = (outSize * 1.1) + 12;
+
+				int chunksX = (int)ceil((double)server.map->width / (double)chunkSizeX);
+				int chunksZ = (int)ceil((double)server.map->height / (double)chunkSizeZ);
+
+				uint8_t *chunk = calloc(sizeof(uint8_t), outSize);
+				uint8_t *zchunk = calloc(sizeof(uint8_t), outSizeZ);
+
+				for (int x = 0; x < chunksX; x++)
+				for (int z = 0; z < chunksZ; z++) {
+					buffer_write_uint8(client->out_buffer, alphapacket_chunk_visibility);
+					buffer_write_int32be(client->out_buffer, x);
+					buffer_write_int32be(client->out_buffer, z);
+					buffer_write_uint8(client->out_buffer, 1);
+					client_flush(client);
+
+					for (int xx = 0; xx < chunkSizeX; xx++) {
+						for (int yy = 0; yy < chunkSizeY; yy++) {
+							for (int zz = 0; zz < chunkSizeZ; zz++) {
+								int ax = (x << 4) + xx;
+								int az = (z << 4) + zz;
+
+								size_t idx = yy + (zz * chunkSizeY) + (xx * chunkSizeY * chunkSizeZ);
+
+								chunk[idx] = map_get(server.map, ax, yy, az);
+								chunk[(chunkSizeTotal) + (idx / 2)] = 0;
+								chunk[(int)(chunkSizeTotal * 1.5) + (idx / 2)] = 0xFF;
+								chunk[(chunkSizeTotal * 2) + (idx / 2)] = 0xFF;
+							}
+						}
+					}
+
+					log_printf(log_info, "send chunk %d, %d", x, z);
+
+					z_stream stream;
+					stream.zalloc = Z_NULL;
+					stream.zfree = Z_NULL;
+					stream.opaque = Z_NULL;
+					stream.avail_in = outSize;
+					stream.next_in = (Bytef *)chunk;
+					stream.avail_out = outSizeZ;
+					stream.next_out = (Bytef *)zchunk;
+					deflateInit(&stream, 1);
+					while ((deflate(&stream, Z_FINISH)) != Z_STREAM_END) ;
+					deflateEnd(&stream);
+
+					buffer_write_uint8(client->out_buffer, alphapacket_block_data);
+					buffer_write_int32be(client->out_buffer, x << 4);
+					buffer_write_int16be(client->out_buffer, 0);
+					buffer_write_int32be(client->out_buffer, z << 4);
+					buffer_write_uint8(client->out_buffer, chunkSizeX - 1);
+					buffer_write_uint8(client->out_buffer, chunkSizeY - 1);
+					buffer_write_uint8(client->out_buffer, chunkSizeZ - 1);
+					buffer_write_int32be(client->out_buffer, stream.total_out);
+					buffer_write(client->out_buffer, zchunk, stream.total_out);
+					client_flush(client);
+
+					memset(chunk, 0, outSize);
+					memset(zchunk, 0, outSizeZ);
+				}
+
+				free(zchunk);
+				free(chunk);
+
+				log_printf(log_info, "Spawning...");
+
+				buffer_write_uint8(client->out_buffer, alphapacket_world_spawn);
+				buffer_write_uint32be(client->out_buffer, 0);
+				buffer_write_uint32be(client->out_buffer, server.map->depth / 2);
+				buffer_write_uint32be(client->out_buffer, 0);
+				client_flush(client);
+
+				buffer_write_uint8(client->out_buffer, alphapacket_player_pos_angle);
+				buffer_write_doublebe(client->out_buffer, (double)client->x);
+				buffer_write_doublebe(client->out_buffer, (double)client->y + 1.62);
+				buffer_write_doublebe(client->out_buffer, (double)client->y);
+				buffer_write_doublebe(client->out_buffer, (double)client->z);
+				buffer_write_floatbe(client->out_buffer, client->yaw);
+				buffer_write_floatbe(client->out_buffer, client->pitch);
+				buffer_write_uint8(client->out_buffer, 1);
+				client_flush(client);
+
+				client->spawned = true;
+
+				break;
+			}
+
+			case alphapacket_chat: {
+				char *msg = buffer_read_alphastr(in_buffer);
+
+				if (msg[0] == '/') {
+					command_execute(client, msg);
+				}
+				else if (client->spawned) {
+					server_broadcast("&e%s: &f%s", client->name, msg);
+				}
+
+				break;
+			}
+
+			case alphapacket_player: {
+				uint8_t grounded;
+
+				buffer_read_uint8(in_buffer, &grounded);
+
+				break;
+			}
+
+			case alphapacket_player_pos: {
+				double x, y, z, stance;
+				uint8_t grounded;
+
+				buffer_read_doublebe(in_buffer, &x);
+				buffer_read_doublebe(in_buffer, &y);
+				buffer_read_doublebe(in_buffer, &stance);
+				buffer_read_doublebe(in_buffer, &z);
+				buffer_read_uint8(in_buffer, &grounded);
+
+				client->x = x;
+				client->y = stance;
+				client->z = z;
+				log_printf(log_info, "Apparent pos: %f, %f, %f", client->x, client->y, client->z);
+
+				client_on_move(client);
+
+				break;
+			}
+
+			case alphapacket_player_angle: {
+				float yaw, pitch;
+				uint8_t grounded;
+
+				buffer_read_floatbe(in_buffer, &client->yaw);
+				buffer_read_floatbe(in_buffer, &client->pitch);
+				buffer_read_uint8(in_buffer, &grounded);
+
+				client->yaw = fmodf(client->yaw + 180.0f, 360.0f);
+				client_on_move(client);
+
+				break;
+			}
+
+			case alphapacket_player_pos_angle: {
+				double x, y, z, stance;
+				float yaw, pitch;
+				uint8_t grounded;
+
+				buffer_read_doublebe(in_buffer, &x);
+				buffer_read_doublebe(in_buffer, &y);
+				buffer_read_doublebe(in_buffer, &stance);
+				buffer_read_doublebe(in_buffer, &z);
+				buffer_read_floatbe(in_buffer, &client->yaw);
+				buffer_read_floatbe(in_buffer, &client->pitch);
+				buffer_read_uint8(in_buffer, &grounded);
+
+				client->yaw = fmodf(client->yaw + 180.0f, 360.0f);
+
+				client->x = x;
+				client->y = stance;
+				client->z = z;
+				log_printf(log_info, "Apparent pos: %f, %f, %f", client->x, client->y, client->z);
+
+				client_on_move(client);
+
+				break;
+			}
+
+			default: {
+				log_printf(log_error, "ALPHA client %zu (%s) sent unknown packet 0x%02x", client->idx, client->name, packet_id);
+				client_disconnect(client, "Received malformed data.");
+				return;
+			};
+		}
 	}
 }
 
@@ -612,6 +845,15 @@ void client_send_level(client_t *client) {
 void client_send(client_t *client, buffer_t *buffer) {
 	if (buffer->mem.offset == 0) {
 		return;
+	}
+
+	{
+		static int i = 0;
+		char fn[512];
+		snprintf(fn, sizeof(fn), "packet_out_%d.bin", i++);
+		FILE *fp = fopen(fn, "wb");
+		fwrite(buffer->mem.data, 1, buffer->mem.offset, fp);
+		fclose(fp);
 	}
 
 	int sendflags = 0;
@@ -704,8 +946,14 @@ void client_start_fast_mapsave(client_t *client) {
 
 void client_disconnect(client_t *client, const char *msg) {
 	if (client->connected) {
-		buffer_write_uint8(client->out_buffer, packet_player_disconnect);
-		buffer_write_mcstr(client->out_buffer, msg, client_supports_extension(client, "FullCP437", 1));
+		if (client->is_alpha) {
+			buffer_write_uint8(client->out_buffer, alphapacket_kick);
+			buffer_write_alphastr(client->out_buffer, msg);
+		}
+		else {
+			buffer_write_uint8(client->out_buffer, packet_player_disconnect);
+			buffer_write_mcstr(client->out_buffer, msg, client_supports_extension(client, "FullCP437", 1));
+		}
 		client_flush(client);
 
 		if (client->using_websocket) {
@@ -758,7 +1006,10 @@ uint8_t client_filter_block(client_t *client, uint8_t block) {
 }
 
 void client_send_message(client_t *client, const char *fmt, ...) {
-	if (client->protocol_version < 3) {
+	if (!client->is_alpha && client->protocol_version < 3) {
+		return;
+	}
+	else if (client->is_alpha && !client->spawned) {
 		return;
 	}
 
@@ -770,9 +1021,19 @@ void client_send_message(client_t *client, const char *fmt, ...) {
 		va_end(args);
 	}
 
-	buffer_write_uint8(client->out_buffer, packet_message);
-	buffer_write_uint8(client->out_buffer, 0x7F);
-	buffer_write_mcstr(client->out_buffer, buffer, !client_supports_extension(client, "FullCP437", 1));
+	if (!client->is_alpha) {
+		buffer_write_uint8(client->out_buffer, packet_message);
+		buffer_write_uint8(client->out_buffer, 0x7F);
+		buffer_write_mcstr(client->out_buffer, buffer, !client_supports_extension(client, "FullCP437", 1));
+	}
+	else {
+		char *filtered = util_classic_to_alpha(buffer);
+
+		buffer_write_uint8(client->out_buffer, alphapacket_chat);
+		buffer_write_alphastr(client->out_buffer, filtered);
+
+		free(filtered);
+	}
 	client_flush(client);
 }
 
@@ -783,16 +1044,60 @@ void client_teleport(client_t *client, float x, float y, float z, float yaw, flo
 	client->yaw = yaw;
 	client->pitch = pitch;
 
+	if (client->is_alpha) {
+		buffer_write_uint8(client->out_buffer, alphapacket_player_pos_angle);
+		buffer_write_doublebe(client->out_buffer, (double)client->x);
+		buffer_write_doublebe(client->out_buffer, (double)client->y + 1.62);
+		buffer_write_doublebe(client->out_buffer, (double)client->y);
+		buffer_write_doublebe(client->out_buffer, (double)client->z);
+		buffer_write_floatbe(client->out_buffer, client->yaw);
+		buffer_write_floatbe(client->out_buffer, client->pitch);
+		buffer_write_uint8(client->out_buffer, 1);
+		client_flush(client);
+	}
+
 	for (size_t i = 0; i < server.num_clients; i++) {
 		client_t *other = &server.clients[i];
 
+		if (other->is_alpha) {
+			continue;;
+			if (other != client) {
+				buffer_write_uint8(other->out_buffer, alphapacket_entity_teleport);
+				buffer_write_uint32be(other->out_buffer, other->idx);
+				buffer_write_uint32be(other->out_buffer, client->x);
+				buffer_write_uint32be(other->out_buffer, client->y);
+				buffer_write_uint32be(other->out_buffer, client->z);
+				buffer_write_uint8(other->out_buffer, (uint8_t)(client->yaw / 360.0f * 256.0f));
+				buffer_write_uint8(other->out_buffer, (uint8_t)(client->pitch / 360.0f * 256.0f));
+			}
+		}
+		else {
+			buffer_write_uint8(other->out_buffer, packet_player_pos_angle);
+			buffer_write_uint8(other->out_buffer, other == client ? 0xFF : other->idx);
+			buffer_write_uint16be(other->out_buffer, util_float2fixed(client->x));
+			buffer_write_uint16be(other->out_buffer, util_float2fixed(client->y));
+			buffer_write_uint16be(other->out_buffer, util_float2fixed(client->z));
+			buffer_write_uint8(other->out_buffer, util_degrees2fixed(client->yaw));
+			buffer_write_uint8(other->out_buffer, util_degrees2fixed(client->pitch));
+		}
+		client_flush(other);
+	}
+}
+
+void client_on_move(client_t *client) {
+	for (size_t i = 0; i < server.num_clients; i++) {
+		client_t *other = &server.clients[i];
+		if (other == client || other->is_alpha) {
+			continue;
+		}
+
 		buffer_write_uint8(other->out_buffer, packet_player_pos_angle);
-		buffer_write_uint8(other->out_buffer, other == client ? 0xFF : other->idx);
-		buffer_write_uint16be(other->out_buffer, util_float2fixed(client->x));
-		buffer_write_uint16be(other->out_buffer, util_float2fixed(client->y));
-		buffer_write_uint16be(other->out_buffer, util_float2fixed(client->z));
-		buffer_write_uint8(other->out_buffer, util_degrees2fixed(client->yaw));
-		buffer_write_uint8(other->out_buffer, util_degrees2fixed(client->pitch));
+		buffer_write_int8(other->out_buffer, client->idx);
+		buffer_write_int16be(other->out_buffer, util_float2fixed(client->x));
+		buffer_write_int16be(other->out_buffer, util_float2fixed(client->y));
+		buffer_write_int16be(other->out_buffer, util_float2fixed(client->z));
+		buffer_write_int8(other->out_buffer, util_degrees2fixed(client->yaw));
+		buffer_write_int8(other->out_buffer, util_degrees2fixed(client->pitch));
 		client_flush(other);
 	}
 }

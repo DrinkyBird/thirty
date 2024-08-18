@@ -43,3 +43,5 @@ void util_httpheaders_destroy(httpheaders_t *list);
 
 void util_print_coloured(FILE *file, const char *msg);
 void util_print_strip_colours(FILE *file, const char *msg);
+
+char *util_classic_to_alpha(const char *msg);

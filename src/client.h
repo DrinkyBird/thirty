@@ -42,6 +42,7 @@ typedef struct client_s {
 	uint16_t port;
 
 	uint8_t protocol_version;
+	bool is_alpha;
 
 	struct buffer_s *in_buffer;
 	struct buffer_s *out_buffer;
@@ -85,6 +86,8 @@ uint8_t client_filter_block(client_t *client, uint8_t block);
 
 void client_send_message(client_t *client, const char *fmt, ...);
 void client_teleport(client_t *client, float x, float y, float z, float yaw, float pitch);
+
+void client_on_move(client_t *client);
 
 typedef struct {
 	client_t *client;

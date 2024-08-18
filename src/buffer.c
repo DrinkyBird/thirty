@@ -321,3 +321,20 @@ void buffer_write_mcstr(buffer_t *buffer, const char *data, bool filter) {
 
 	buffer_write(buffer, s, 64);
 }
+
+char *buffer_read_alphastr(buffer_t *buffer) {
+	uint16_t len;
+	buffer_read_uint16be(buffer, &len);
+
+	char *data = calloc(sizeof(char), len + 1);
+	buffer_read(buffer, data, len);
+	data[len] = '\0';
+
+	return data;
+}
+
+void buffer_write_alphastr(buffer_t *buffer, const char *data) {
+	size_t len = strlen(data);
+	buffer_write_uint16be(buffer, len);
+	buffer_write(buffer, data, len);
+}
