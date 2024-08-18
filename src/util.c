@@ -232,8 +232,8 @@ char *util_classic_to_alpha(const char *msg) {
 	for (size_t i = 0; i < originalSize; i++) {
 		const char c = msg[i];
 		if (c == '&') {
-			buf[bufp++] = 0xc2;
-			buf[bufp++] = 0xa7;
+			buf[bufp++] = (char)0xc2;
+			buf[bufp++] = (char)0xa7;
 			buf[bufp] = 0;
 		}
 		else {
