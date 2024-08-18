@@ -322,19 +322,37 @@ void buffer_write_mcstr(buffer_t *buffer, const char *data, bool filter) {
 	buffer_write(buffer, s, 64);
 }
 
-char *buffer_read_alphastr(buffer_t *buffer) {
+char *buffer_read_alphastr(buffer_t *buffer, bool utf16) {
 	uint16_t len;
 	buffer_read_uint16be(buffer, &len);
 
 	char *data = calloc(sizeof(char), len + 1);
-	buffer_read(buffer, data, len);
+	if (utf16) {
+		size_t n = 0;
+		for (size_t i = 0; i < len; i ++) {
+			uint8_t unused;
+			buffer_read_uint8(buffer, &unused);
+			buffer_read_int8(buffer, (int8_t *)&data[n++]);
+		}
+	}
+	else {
+		buffer_read(buffer, data, len);
+	}
 	data[len] = '\0';
 
 	return data;
 }
 
-void buffer_write_alphastr(buffer_t *buffer, const char *data) {
+void buffer_write_alphastr(buffer_t *buffer, const char *data, bool utf16) {
 	size_t len = strlen(data);
 	buffer_write_uint16be(buffer, len);
-	buffer_write(buffer, data, len);
+	if (utf16) {
+		for (size_t i = 0; i < len; i++) {
+			buffer_write_int8(buffer, 0);
+			buffer_write_int8(buffer, (int8_t)data[i]);
+		}
+	}
+	else {
+		buffer_write(buffer, data, len);
+	}
 }

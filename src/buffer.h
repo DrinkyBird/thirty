@@ -99,5 +99,5 @@ bool buffer_write_doublebe(buffer_t *buffer, double data);
 void buffer_read_mcstr(buffer_t *buffer, char data[65]);
 void buffer_write_mcstr(buffer_t *buffer, const char *data, bool filter);
 
-char *buffer_read_alphastr(buffer_t *buffer);
-void buffer_write_alphastr(buffer_t *buffer, const char *data);
+char *buffer_read_alphastr(buffer_t *buffer, bool utf16);
+void buffer_write_alphastr(buffer_t *buffer, const char *data, bool utf16);

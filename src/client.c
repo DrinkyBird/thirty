@@ -377,9 +377,21 @@ void client_handle_in_buffer(client_t *client, buffer_t *in_buffer, size_t r) {
 
 			case alphapacket_handshake: {
 				client->is_alpha = true;
-				free(buffer_read_alphastr(client->in_buffer));
+
+				// since we can't tell if we need to use a UTF-16 protocol right now,
+				// guess based on if the first char of the string is a 0
+				uint16_t len;
+				buffer_read_uint16be(in_buffer, &len);
+
+				char test[2];
+				buffer_read(in_buffer, test, 2);
+				buffer_seek(in_buffer, buffer_tell(in_buffer) - 2);
+
+				const bool use_utf16 = (test[0] == 0 && isalnum(test[1]));
+				buffer_seek(in_buffer, buffer_tell(in_buffer) + (len * (use_utf16 ? 2 : 1)));
+
 				buffer_write_uint8(client->out_buffer, alphapacket_handshake);
-				buffer_write_alphastr(client->out_buffer, "-");
+				buffer_write_alphastr(client->out_buffer, "-", use_utf16);
 				client_handle_in_buffer_alpha(client, in_buffer, r);
 				return;
 			}
@@ -565,13 +577,16 @@ void client_handle_in_buffer_alpha(client_t *client, buffer_t *in_buffer, size_t
 			case alphapacket_ident: {
 				int32_t protocol_version;
 				char *name;
-				char *password;
+				char *password = NULL;
 				int64_t seed;
 				uint8_t dimension;
 
 				buffer_read_int32be(in_buffer, &protocol_version);
-				name = buffer_read_alphastr(in_buffer);
-				password = buffer_read_alphastr(in_buffer);
+				const bool use_utf16 = protocol_version >= 11;
+				name = buffer_read_alphastr(in_buffer, use_utf16);
+				if (protocol_version < 11) {
+					password = buffer_read_alphastr(in_buffer, use_utf16);
+				}
 				buffer_read_int64be(in_buffer, &seed);
 				buffer_read_uint8(in_buffer, &dimension);
 
@@ -583,8 +598,10 @@ void client_handle_in_buffer_alpha(client_t *client, buffer_t *in_buffer, size_t
 
 				buffer_write_uint8(client->out_buffer, alphapacket_ident);
 				buffer_write_int32be(client->out_buffer, client->idx);
-				buffer_write_alphastr(client->out_buffer, "");
-				buffer_write_alphastr(client->out_buffer, "");
+				buffer_write_alphastr(client->out_buffer, "", use_utf16);
+				if (protocol_version < 11) {
+					buffer_write_alphastr(client->out_buffer, "", false);
+				}
 				buffer_write_int64be(client->out_buffer, config.map.seed);
 				buffer_write_uint8(client->out_buffer, 0);
 				client_flush(client);
@@ -682,7 +699,7 @@ void client_handle_in_buffer_alpha(client_t *client, buffer_t *in_buffer, size_t
 			}
 
 			case alphapacket_chat: {
-				char *msg = buffer_read_alphastr(in_buffer);
+				char *msg = buffer_read_alphastr(in_buffer, client->protocol_version >= 11);
 
 				if (msg[0] == '/') {
 					command_execute(client, msg);
@@ -946,7 +963,7 @@ void client_disconnect(client_t *client, const char *msg) {
 	if (client->connected) {
 		if (client->is_alpha) {
 			buffer_write_uint8(client->out_buffer, alphapacket_kick);
-			buffer_write_alphastr(client->out_buffer, msg);
+			buffer_write_alphastr(client->out_buffer, msg, client->protocol_version >= 11);
 		}
 		else {
 			buffer_write_uint8(client->out_buffer, packet_player_disconnect);
@@ -1028,7 +1045,7 @@ void client_send_message(client_t *client, const char *fmt, ...) {
 		char *filtered = util_classic_to_alpha(buffer);
 
 		buffer_write_uint8(client->out_buffer, alphapacket_chat);
-		buffer_write_alphastr(client->out_buffer, filtered);
+		buffer_write_alphastr(client->out_buffer, filtered, client->protocol_version >= 11);
 
 		free(filtered);
 	}
