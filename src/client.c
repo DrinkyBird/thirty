@@ -590,7 +590,7 @@ void client_handle_in_buffer_alpha(client_t *client, buffer_t *in_buffer, size_t
 				client_flush(client);
 
 				const int chunkSizeX = 16;
-				const int chunkSizeY = min(server.map->depth, 128);
+				const int chunkSizeY = util_min(server.map->depth, 128);
 				const int chunkSizeZ = 16;
 				const int chunkSizeTotal = chunkSizeX * chunkSizeY * chunkSizeZ;
 				const int outSize = chunkSizeTotal * 2.5;
@@ -723,7 +723,6 @@ void client_handle_in_buffer_alpha(client_t *client, buffer_t *in_buffer, size_t
 			}
 
 			case alphapacket_player_angle: {
-				float yaw, pitch;
 				uint8_t grounded;
 
 				buffer_read_floatbe(in_buffer, &client->yaw);
@@ -738,7 +737,6 @@ void client_handle_in_buffer_alpha(client_t *client, buffer_t *in_buffer, size_t
 
 			case alphapacket_player_pos_angle: {
 				double x, y, z, stance;
-				float yaw, pitch;
 				uint8_t grounded;
 
 				buffer_read_doublebe(in_buffer, &x);
