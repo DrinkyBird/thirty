@@ -578,8 +578,11 @@ void client_handle_in_buffer_alpha(client_t *client, buffer_t *in_buffer, size_t
 				int32_t protocol_version;
 				char *name;
 				char *password = NULL;
-				int64_t seed;
-				uint8_t dimension;
+				int64_t unused1;
+				int32_t unused2;
+				uint8_t unused3;
+				int8_t unused4;
+				uint8_t unused5, unused6;
 
 				buffer_read_int32be(in_buffer, &protocol_version);
 				const bool use_utf16 = protocol_version >= 11;
@@ -587,8 +590,16 @@ void client_handle_in_buffer_alpha(client_t *client, buffer_t *in_buffer, size_t
 				if (protocol_version < 11) {
 					password = buffer_read_alphastr(in_buffer, use_utf16);
 				}
-				buffer_read_int64be(in_buffer, &seed);
-				buffer_read_uint8(in_buffer, &dimension);
+				buffer_read_int64be(in_buffer, &unused1);
+				if (protocol_version >= 15) {
+					buffer_read_int32be(in_buffer, &unused2);
+				}
+				buffer_read_uint8(in_buffer, &unused3);
+				if (protocol_version >= 15) {
+					buffer_read_int8(in_buffer, &unused4);
+					buffer_read_uint8(in_buffer, &unused5);
+					buffer_read_uint8(in_buffer, &unused6);
+				}
 
 				client->protocol_version = protocol_version;
 
@@ -602,8 +613,16 @@ void client_handle_in_buffer_alpha(client_t *client, buffer_t *in_buffer, size_t
 				if (protocol_version < 11) {
 					buffer_write_alphastr(client->out_buffer, "", false);
 				}
+				if (protocol_version >= 15) {
+					buffer_write_int32be(client->out_buffer, 1); // gamemode
+				}
 				buffer_write_int64be(client->out_buffer, config.map.seed);
-				buffer_write_uint8(client->out_buffer, 0);
+				buffer_write_uint8(client->out_buffer, 0); // dimension
+				if (protocol_version >= 15) {
+					buffer_write_int8(client->out_buffer, 0); // difficulty
+					buffer_write_uint8(client->out_buffer, util_min(255, server.map->height)); // world height
+					buffer_write_uint8(client->out_buffer, util_min(255, config.server.max_players)); // max players
+				}
 				client_flush(client);
 
 				const int chunkSizeX = 16;
@@ -1042,12 +1061,18 @@ void client_send_message(client_t *client, const char *fmt, ...) {
 		buffer_write_mcstr(client->out_buffer, buffer, !client_supports_extension(client, "FullCP437", 1));
 	}
 	else {
-		char *filtered = util_classic_to_alpha(buffer);
+		if (client->protocol_version >= 11) {
+			buffer_write_uint8(client->out_buffer, alphapacket_chat);
+			buffer_write_alphastr(client->out_buffer, buffer, false);
+		}
+		else {
+			char *filtered = util_classic_to_alpha(buffer);
 
-		buffer_write_uint8(client->out_buffer, alphapacket_chat);
-		buffer_write_alphastr(client->out_buffer, filtered, client->protocol_version >= 11);
+			buffer_write_uint8(client->out_buffer, alphapacket_chat);
+			buffer_write_alphastr(client->out_buffer, filtered, false);
 
-		free(filtered);
+			free(filtered);
+		}
 	}
 	client_flush(client);
 }

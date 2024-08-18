@@ -328,11 +328,10 @@ char *buffer_read_alphastr(buffer_t *buffer, bool utf16) {
 
 	char *data = calloc(sizeof(char), len + 1);
 	if (utf16) {
-		size_t n = 0;
 		for (size_t i = 0; i < len; i ++) {
 			uint8_t unused;
 			buffer_read_uint8(buffer, &unused);
-			buffer_read_int8(buffer, (int8_t *)&data[n++]);
+			buffer_read_int8(buffer, (int8_t *)&data[i]);
 		}
 	}
 	else {
@@ -348,8 +347,14 @@ void buffer_write_alphastr(buffer_t *buffer, const char *data, bool utf16) {
 	buffer_write_uint16be(buffer, len);
 	if (utf16) {
 		for (size_t i = 0; i < len; i++) {
-			buffer_write_int8(buffer, 0);
-			buffer_write_int8(buffer, (int8_t)data[i]);
+			if (data[i] == '&') {
+				buffer_write_uint8(buffer, 0x00U);
+				buffer_write_uint8(buffer, 0xa7U);
+			}
+			else {
+				buffer_write_int8(buffer, 0);
+				buffer_write_int8(buffer, (int8_t)data[i]);
+			}
 		}
 	}
 	else {
