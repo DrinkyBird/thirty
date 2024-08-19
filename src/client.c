@@ -591,6 +591,9 @@ void client_handle_in_buffer_alpha(client_t *client, buffer_t *in_buffer, size_t
 					password = buffer_read_alphastr(in_buffer, use_utf16);
 				}
 				buffer_read_int64be(in_buffer, &unused1);
+				if (protocol_version >= 23) {
+					free(buffer_read_alphastr(in_buffer, use_utf16));
+				}
 				if (protocol_version >= 15) {
 					buffer_read_int32be(in_buffer, &unused2);
 				}
@@ -613,10 +616,13 @@ void client_handle_in_buffer_alpha(client_t *client, buffer_t *in_buffer, size_t
 				if (protocol_version < 11) {
 					buffer_write_alphastr(client->out_buffer, "", false);
 				}
+				buffer_write_int64be(client->out_buffer, config.map.seed);
+				if (protocol_version >= 23) {
+					buffer_write_alphastr(in_buffer, "DEFAULT", true);
+				}
 				if (protocol_version >= 15) {
 					buffer_write_int32be(client->out_buffer, 1); // gamemode
 				}
-				buffer_write_int64be(client->out_buffer, config.map.seed);
 				buffer_write_uint8(client->out_buffer, 0); // dimension
 				if (protocol_version >= 15) {
 					buffer_write_int8(client->out_buffer, 0); // difficulty
