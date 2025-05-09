@@ -59,6 +59,7 @@ static commanddef_t commands[] = {
 	{ "version", command_version, "Display software version", false },
 	{ "whitelist", command_whitelist, "Manage server whitelist", true },
 	{ "eval", scripting_eval_command, "Evaluate JavaScript code", true },
+	{ "run", scripting_run_command, "Run a JavaScript file", true },
 };
 
 void command_execute(client_t *client, const char *command) {
