@@ -26,6 +26,7 @@
 #include "config.h"
 #include "log.h"
 #include "version.h"
+#include "scripting.h"
 
 static void signal_handler(int signum);
 
@@ -63,6 +64,8 @@ int main(int argc, char *argv[]) {
 	config_init(config_file);
 	blocks_init();
 
+	scripting_init();
+
 #ifdef _WIN32
 	{
 		WSADATA wsadata;
@@ -89,6 +92,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	server_shutdown();
+	scripting_shutdown();
 	config_destroy();
 	log_shutdown();
 

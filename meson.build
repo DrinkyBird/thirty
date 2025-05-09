@@ -29,6 +29,9 @@ version_h = configure_file(input: 'version.h.in', output: 'version.h', configura
 
 hg_identify = vcs_tag(command: ['hg', 'identify', '-T', '{node|short}', '-r', '.'], input: 'hginfo.h.in', output: 'hginfo.h', replace_string: '@hg_changeset@')
 
+quickjs = subproject('quickjs')
+quickjs_dep = quickjs.get_variable('quickjs_dep')
+
 source_files = [
     'src/blocks.c',
     'src/blocks.h',
@@ -65,6 +68,8 @@ source_files = [
     'src/perlin.h',
     'src/rng.c',
     'src/rng.h',
+    'src/scripting.c',
+    'src/scripting.h',
     'src/server.c',
     'src/server.h',
     'src/util.c',
@@ -85,6 +90,7 @@ source_files = [
 deps = [
     dependency('threads', required: true),
     dependency('zlib', required: true),
+    quickjs_dep
 ]
 
 if build_machine.system() == 'windows'

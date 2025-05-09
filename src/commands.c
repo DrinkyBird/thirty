@@ -25,6 +25,7 @@
 #include "map.h"
 #include "server.h"
 #include "namelist.h"
+#include "scripting.h"
 
 typedef void (*commandfunc_t)(int argc, const char **argv, client_t *client);
 
@@ -57,6 +58,7 @@ static commanddef_t commands[] = {
 	{ "teleport", command_teleport, "Teleport a player", false },
 	{ "version", command_version, "Display software version", false },
 	{ "whitelist", command_whitelist, "Manage server whitelist", true },
+	{ "eval", scripting_eval_command, "Evaluate JavaScript code", true },
 };
 
 void command_execute(client_t *client, const char *command) {
