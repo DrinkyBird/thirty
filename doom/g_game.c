@@ -22,6 +22,8 @@
 //-----------------------------------------------------------------------------
 
 
+#include "src/client.h"
+#include "src/server.h"
 static const char
 rcsid[] = "$Id: g_game.c,v 1.8 1997/02/03 22:45:09 b1 Exp $";
 
@@ -304,7 +306,7 @@ void G_BuildTiccmd (ticcmd_t* cmd)
 	    cmd->angleturn -= angleturn[tspeed]; 
 	if (joyxmove < 0) 
 	    cmd->angleturn += angleturn[tspeed]; 
-    } 
+    }
  
     if (gamekeydown[key_up]) 
     {
@@ -328,7 +330,7 @@ void G_BuildTiccmd (ticcmd_t* cmd)
     // buttons
     cmd->chatchar = HU_dequeueChatChar(); 
  
-    if (gamekeydown[key_fire] || mousebuttons[mousebfire] 
+    if (gamekeydown[key_fire] || mousebuttons[mousebfire]
 	|| joybuttons[joybfire]) 
 	cmd->buttons |= BT_ATTACK; 
  

@@ -549,7 +549,7 @@ P_CrossSpecialLine
 
       case 3:
 	// Close Door
-	EV_DoDoor(line,close);
+	EV_DoDoor(line,doorclose);
 	line->special = 0;
 	break;
 
@@ -802,7 +802,7 @@ P_CrossSpecialLine
 	
       case 75:
 	// Close Door
-	EV_DoDoor(line,close);
+	EV_DoDoor(line,doorclose);
 	break;
 	
       case 76:
