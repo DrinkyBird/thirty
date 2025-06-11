@@ -39,6 +39,8 @@ enum {
 
 	packet_custom_block_support_level = 0x13,
 
+	packet_player_clicked = 0x22,
+
 	packet_set_text_colour = 0x27,
 
 	packet_two_way_ping = 0x2b,

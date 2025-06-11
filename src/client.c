@@ -37,6 +37,8 @@
 #include "log.h"
 #include "version.h"
 #include "commands.h"
+#include "doom/d_event.h"
+#include "doom/d_main.h"
 
 #define BUFFER_SIZE (512 * 1024)
 #define PING_INTERVAL (1.0)
@@ -68,9 +70,9 @@ void client_init(client_t *client, int fd, size_t idx) {
 	client->mapgz_buffer = NULL;
 	client->last_ping = 0;
 	client->ping = 0;
-	client->x = rng_next(server.global_rng, util_min(1023, (int)server.map->width)) + 0.5f;
-	client->z = rng_next(server.global_rng, util_min(1023, (int)server.map->height)) + 0.5f;
-	client->y = map_get_top(server.map, (size_t)client->x, (size_t)client->z) + 2.0f;
+	client->x = (float)server.map->width / 2.0f;
+	client->z = (float)server.map->height / 2.0f;
+	client->y = (float)server.map->depth / 2.0f;
 	client->yaw = 0.0f;
 	client->pitch = 0.0f;
 	client->spawned = false;
@@ -89,6 +91,9 @@ void client_init(client_t *client, int fd, size_t idx) {
 	client->last_receive = 0.0;
 
 	pthread_mutex_init(&client->out_mutex, NULL);
+
+	memset(client->xb, 0, sizeof(client->xb));
+	memset(client->zb, 0, sizeof(client->zb));
 }
 
 void client_destroy(client_t *client) {
@@ -209,6 +214,11 @@ void client_tick(client_t *client) {
 	if (get_time_s() - client->last_receive >= idle_period && client->mapsend_state < mapsend_preparing && client->mapsend_state > mapsend_running) {
 		client_disconnect(client, "Client timed out");
 	}
+
+	float newx = (float)server.map->width / 2.0f;
+	float newy = (float)server.map->depth / 2.0f - 1.65f;
+	float newz = (float)server.map->height / 2.0f;
+	client_teleport(client, newx, newy, newz, 0.0f, 0.0f);
 
 	client_flush(client);
 }
@@ -479,6 +489,40 @@ void client_handle_in_buffer(client_t *client, buffer_t *in_buffer, size_t r) {
 				client->yaw = util_fixed2degrees(yaw);
 				client->pitch = util_fixed2degrees(pitch);
 
+				event_t ev;
+				ev.type = ev_mouse;
+				ev.data1 = 0;
+				ev.data2 = (int)(client->yaw * 32.0f);
+				ev.data3 = (int)(client->pitch * 32.0f);
+
+				D_PostEvent(&ev);
+
+				float xo = client->x - ((float)server.map->width / 2.0f);
+				float zo = client->z - ((float)server.map->height / 2.0f);
+
+				memmove(client->xb, client->xb + 1, (DOOM_MOVEBUFFER_SIZE - 1) * sizeof(float));
+				memmove(client->zb, client->zb + 1, (DOOM_MOVEBUFFER_SIZE - 1) * sizeof(float));
+				client->xb[DOOM_MOVEBUFFER_SIZE - 1] = xo;
+				client->zb[DOOM_MOVEBUFFER_SIZE - 1] = zo;
+
+				float max_x = 0.0f;
+				float max_z = 0.0f;
+				for (int i = 0; i < DOOM_MOVEBUFFER_SIZE; i++) {
+					if (fabsf(client->xb[i]) > fabsf(max_x)) {
+						max_x = client->xb[i];
+					}
+					if (fabsf(client->zb[i]) > fabsf(max_z)) {
+						max_z = client->zb[i];
+					}
+				}
+
+				ev.type = ev_joystick;
+				ev.data1 = 0;
+				ev.data2 = (int)(max_x * 128.0f);
+				ev.data3 = (int)(max_z * 128.0f);
+
+				D_PostEvent(&ev);
+
 				for (size_t i = 0; i < server.num_clients; i++) {
 					client_t *other = &server.clients[i];
 					if (other == client) {
@@ -494,6 +538,34 @@ void client_handle_in_buffer(client_t *client, buffer_t *in_buffer, size_t r) {
 					buffer_write_int8(other->out_buffer, util_degrees2fixed(client->pitch));
 					client_flush(other);
 				}
+
+				break;
+			}
+
+			case packet_player_clicked: {
+				int8_t button, action;
+				int16_t yaw, pitch;
+				int8_t target_entity;
+				int16_t target_block_x, target_block_y, target_block_z;
+				int8_t target_face;
+
+				buffer_read_int8(in_buffer, &button);
+				buffer_read_int8(in_buffer, &action);
+				buffer_read_int16be(in_buffer, &yaw);
+				buffer_read_int16be(in_buffer, &pitch);
+				buffer_read_int8(in_buffer, &target_entity);
+				buffer_read_int16be(in_buffer, &target_block_x);
+				buffer_read_int16be(in_buffer, &target_block_y);
+				buffer_read_int16be(in_buffer, &target_block_z);
+				buffer_read_int8(in_buffer, &target_face);
+
+				event_t ev;
+				ev.type = ev_mouse;
+				ev.data1 = (int)button + 1;
+				ev.data2 = 0;
+				ev.data3 = 0;
+
+				D_PostEvent(&ev);
 
 				break;
 			}
@@ -789,7 +861,7 @@ void client_teleport(client_t *client, float x, float y, float z, float yaw, flo
 		buffer_write_uint8(other->out_buffer, packet_player_pos_angle);
 		buffer_write_uint8(other->out_buffer, other == client ? 0xFF : other->idx);
 		buffer_write_uint16be(other->out_buffer, util_float2fixed(client->x));
-		buffer_write_uint16be(other->out_buffer, util_float2fixed(client->y));
+		buffer_write_uint16be(other->out_buffer, util_float2fixed(client->y) + 51);
 		buffer_write_uint16be(other->out_buffer, util_float2fixed(client->z));
 		buffer_write_uint8(other->out_buffer, util_degrees2fixed(client->yaw));
 		buffer_write_uint8(other->out_buffer, util_degrees2fixed(client->pitch));

@@ -32,6 +32,8 @@ enum {
 	mapsend_failure
 };
 
+#define DOOM_MOVEBUFFER_SIZE 5
+
 typedef struct client_s {
 	socket_t socket_fd;
 	bool connected;
@@ -71,6 +73,9 @@ typedef struct client_s {
 	uint8_t ws_mask[4];
 	struct buffer_s *ws_frame;
 	struct buffer_s *ws_out_buffer;
+
+	float xb[DOOM_MOVEBUFFER_SIZE];
+	float zb[DOOM_MOVEBUFFER_SIZE];
 } client_t;
 
 void client_init(client_t *client, int fd, size_t idx);

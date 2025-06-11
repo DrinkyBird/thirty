@@ -25,6 +25,7 @@ cpeext_t supported_extensions[] = {
 		{ "CustomBlocks", 1 },
 		{ "TwoWayPing", 1 },
 		{ "TextColors", 1 },
+		{ "PlayerClick", 1 },
 
 		{ "", 0 }
 };

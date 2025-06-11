@@ -32,6 +32,12 @@ void map_generate(map_t *map, const char *generator_name) {
 		map_set(map, x, y, 0, obsidian);
 	}
 
+	size_t newx = map->width / 2;
+	size_t newy = map->depth / 2 - 2;
+	size_t newz = map->height / 2;
+
+	map_set(map, newx, newy, newz, glass);
+
 	map->generating = false;
 }
 
