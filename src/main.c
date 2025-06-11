@@ -26,6 +26,8 @@
 #include "config.h"
 #include "log.h"
 #include "version.h"
+#include "doom/d_main.h"
+#include "doom/m_argv.h"
 
 static void signal_handler(int signum);
 
@@ -75,17 +77,21 @@ int main(int argc, char *argv[]) {
 
 	server_init();
 
+	myargc = argc;
+	myargv = argv;
+	D_DoomMain();
+
 	log_printf(log_info, "Ready!");
 
 	while (running) {
 		double start = get_time_s();
 		server_tick();
 		double end = get_time_s();
-		if (end - start > 1.0 / 20.0) {
+		if (end - start > 1.0 / 35.0) {
 			log_printf(log_info, "Server lagged: Tick %" PRIu64 " took too long (%f ms)", server.tick - 1, (end - start) * 1000.0);
 		}
 
-		usleep(1000000 / 20);
+		usleep(1000000 / 35);
 	}
 
 	server_shutdown();

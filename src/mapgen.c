@@ -27,28 +27,9 @@
 #include "log.h"
 
 void map_generate(map_t *map, const char *generator_name) {
-	map->generating = true;
-
-	if (strcmp(generator_name, "classic") == 0) {
-		mapgen_classic(map);
-	}
-	else if (strcmp(generator_name, "seantest") == 0) {
-		mapgen_seantest(map);
-	}
-	else if (strcmp(generator_name, "flat") == 0) {
-		mapgen_flat(map);
-	}
-	else if (strcmp(generator_name, "debug") == 0) {
-		mapgen_debug(map);
-	}
-	else if (strcmp(generator_name, "random") == 0) {
-		mapgen_random(map);
-	}
-	else if (strcmp(generator_name, "growtest") == 0) {
-		mapgen_growtest(map);
-	}
-	else {
-		log_printf(log_error, "Invalid generator name '%s', map will be empty", generator_name);
+	for (int x = 0; x < map->width; x++)
+	for (int y = 0; y < map->depth; y++) {
+		map_set(map, x, y, 0, obsidian);
 	}
 
 	map->generating = false;

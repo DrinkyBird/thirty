@@ -60,28 +60,12 @@ void map_set(map_t *map, size_t x, size_t y, size_t z, uint8_t block) {
 
 	map->blocks[map_get_block_index(map, x, y, z)] = block;
 
-	if (!map->generating) {
-		if (blockinfo[old_block].breakfunc != NULL) {
-			blockinfo[old_block].breakfunc(map, x, y, z, old_block);
-		}
-
-		if (blockinfo[block].placefunc != NULL) {
-			blockinfo[block].placefunc(map, x, y, z, block);
-		}
-
-		uint64_t ticktime = blockinfo[block].ticktime;
-		uint64_t dist = ticktime == 0 ? 0 : (((server.tick / ticktime) + 1) * ticktime) - server.tick;
-		map_add_tick(map, x, y, z, dist);
-		map_add_tick(map, x + 1, y, z, dist);
-		map_add_tick(map, x - 1, y, z, dist);
-		map_add_tick(map, x, y - 1, z, dist);
-		map_add_tick(map, x, y + 1, z, dist);
-		map_add_tick(map, x, y, z - 1, dist);
-		map_add_tick(map, x, y, z + 1, dist);
-	}
-
 	for (size_t i = 0; i < server.num_clients; i++) {
 		client_t *client = &server.clients[i];
+		if (!client->connected || !client->spawned) {
+			continue;
+		}
+
 		buffer_write_uint8(client->out_buffer, packet_set_block_server);
 		buffer_write_uint16be(client->out_buffer, x);
 		buffer_write_uint16be(client->out_buffer, y);

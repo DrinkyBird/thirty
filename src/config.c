@@ -283,7 +283,7 @@ void cfg_callback(const char *section, const char *key, const char *value) {
 
 	else if (strcmp(section, "map") == 0) {
 		if (strcmp(key, "name") == 0) {
-			config.map.name = strdup(value);
+			config.map.name = strdup("doom");
 		}
 		else if (strcmp(key, "width") == 0) {
 			long size = parse_int(value, &ok, 10);

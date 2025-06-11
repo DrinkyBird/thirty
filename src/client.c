@@ -38,7 +38,7 @@
 #include "version.h"
 #include "commands.h"
 
-#define BUFFER_SIZE (32 * 1024)
+#define BUFFER_SIZE (512 * 1024)
 #define PING_INTERVAL (1.0)
 
 static void client_receive(client_t *client);

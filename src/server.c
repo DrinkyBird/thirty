@@ -35,6 +35,8 @@
 #include "log.h"
 #include "namelist.h"
 #include "mapimage.h"
+#include "doom/doomdef.h"
+#include "doom/d_main.h"
 
 #ifndef _WIN32
 #include <netinet/tcp.h>
@@ -108,20 +110,15 @@ bool server_init(void) {
 	log_printf(log_info, "Server is listening on port %u", server.port);
 
 	log_printf(log_info, "Preparing map...");
-	server.map = map_load(config.map.name);
+	server.map = map_create(config.map.name, SCREENWIDTH, SCREENHEIGHT, SCREENWIDTH);
 
-	if (server.map == NULL) {
-		log_printf(log_info, "Failed to load map '%s', generating new...", config.map.name);
-		server.map = map_create(config.map.name, config.map.width, config.map.depth, config.map.height);
+	log_printf(log_info, "Generating map...");
+	double start = get_time_s();
+	map_generate(server.map, config.map.generator);
+	double duration = get_time_s() - start;
+	log_printf(log_info, "Map generation took %f seconds", duration);
 
-		log_printf(log_info, "Generating map...");
-		double start = get_time_s();
-		map_generate(server.map, config.map.generator);
-		double duration = get_time_s() - start;
-		log_printf(log_info, "Map generation took %f seconds", duration);
-
-		map_save(server.map);
-	}
+	map_save(server.map);
 
 	server.ops = namelist_create("ops.txt");
 	server.banned_users = namelist_create("banned_users.txt");
@@ -147,6 +144,8 @@ void server_shutdown(void) {
 
 void server_tick(void) {
 	server_accept();
+	D_DoomFrame();
+
 	map_tick(server.map);
 
 	for (size_t i = 0; i < server.num_clients; i++) {
