@@ -20,6 +20,7 @@
 #include <pthread.h>
 #include <math.h>
 #include <stdarg.h>
+#include <libguile.h>
 #include "client.h"
 #include "server.h"
 #include "buffer.h"
@@ -1073,4 +1074,16 @@ void create_console_standin(void) {
 	strcpy(command_standin.name, "<server>");
 	command_standin.idx = -1;
 	command_standin.is_op = true;
+}
+
+SCM client_script_send_message(SCM clientp, SCM message) {
+	client_t *client = (client_t*)scm_to_pointer(clientp);
+	const char *messagep = scm_to_locale_string(message);
+
+	client_send_message(client, msgtype_chat, "%s", messagep);
+	return SCM_UNSPECIFIED;
+}
+
+void client_scripting_init() {
+	scm_c_define_gsubr("send-message", 2, 0, 0, client_script_send_message);
 }

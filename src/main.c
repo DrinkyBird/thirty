@@ -19,6 +19,7 @@
 #include <unistd.h>
 #include <inttypes.h>
 #include <getopt.h>
+#include <libguile.h>
 #include "server.h"
 #include "sockets.h"
 #include "blocks.h"
@@ -27,12 +28,36 @@
 #include "config.h"
 #include "log.h"
 #include "version.h"
+#include "scripting.h"
 
 static void signal_handler(int signum);
 
 static bool running = true;
 
 bool args_disable_colour = false;
+
+void inner_main(void *closure, int argc, char *argv[]) {
+	(void) closure;
+	(void) argc;
+	(void) argv;
+
+	commands_init();
+	scripting_init();
+
+	command_readline_init();
+	log_printf(log_info, "Ready! Type 'help' for a list of commands.");
+
+	while (running) {
+		double start = get_time_s();
+		server_tick();
+		double end = get_time_s();
+		if (end - start > 1.0 / 20.0) {
+			log_printf(log_info, "Server lagged: Tick %" PRIu64 " took too long (%f ms)", server.tick - 1, (end - start) * 1000.0);
+		}
+
+		usleep(1000000 / 20);
+	}
+}
 
 int main(int argc, char *argv[]) {
 	setbuf(stdout, NULL);
@@ -78,19 +103,7 @@ int main(int argc, char *argv[]) {
 		goto cleanup;
 	}
 
-	command_readline_init();
-	log_printf(log_info, "Ready! Type 'help' for a list of commands.");
-
-	while (running) {
-		double start = get_time_s();
-		server_tick();
-		double end = get_time_s();
-		if (end - start > 1.0 / 20.0) {
-			log_printf(log_info, "Server lagged: Tick %" PRIu64 " took too long (%f ms)", server.tick - 1, (end - start) * 1000.0);
-		}
-
-		usleep(1000000 / 20);
-	}
+	scm_boot_guile(argc, argv, inner_main, NULL);
 
 cleanup:
 	command_readline_shutdown();

@@ -64,6 +64,8 @@ source_files = [
     'src/perlin.h',
     'src/rng.c',
     'src/rng.h',
+    'src/scripting.c',
+    'src/scripting.h',
     'src/server.c',
     'src/server.h',
     'src/util.c',
@@ -86,6 +88,7 @@ deps = [
     dependency('zlib', required: true),
     dependency('libcurl', required: true),
     dependency('readline', required: true),
+    dependency('guile-3.0', required: true),
     dependency('openmp')
 ]
 

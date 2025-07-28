@@ -17,6 +17,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <libguile.h>
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <poll.h>
@@ -28,49 +29,73 @@
 #include "map.h"
 #include "server.h"
 #include "namelist.h"
+#include "scripting.h"
 
-typedef void (*commandfunc_t)(int argc, const char **argv, client_t *client);
+typedef void (*commandfunc_t)(int argc, const char **argv, client_t *client, void *userdata);
 
 typedef struct commanddef_s {
 	const char *name;
 	commandfunc_t func;
 	const char *helpline;
 	bool op_only;
+	void *userdata;
 } commanddef_t;
+
+static void command_register(commanddef_t *cmd);
+static void command_quick_register(const char *name, commandfunc_t func, const char *helpline, bool op_only, void *userdata);
 
 static void command_readline_callback(char *line);
 static char **command_readline_completion(const char *text, int start, int end);
 static char *command_readline_generator(const char *text, int state);
 static commanddef_t *command_find(const char *name);
 
-static void command_version(int argc, const char **argv, client_t *client);
-static void command_help(int argc, const char **argv, client_t *client);
-static void command_info(int argc, const char **argv, client_t *client);
-static void command_teleport(int argc, const char **argv, client_t *client);
-static void command_ban(int argc, const char **argv, client_t *client);
-static void command_ipban(int argc, const char **argv, client_t *client);
-static void command_whitelist(int argc, const char **argv, client_t *client);
-static void command_op(int argc, const char **argv, client_t *client);
-static void command_save(int argc, const char **argv, client_t *client);
-static void command_online(int argc, const char **argv, client_t *client);
-static void command_env(int argc, const char **argv, client_t *client);
+static void command_version(int argc, const char **argv, client_t *client, void *userdata);
+static void command_help(int argc, const char **argv, client_t *client, void *userdata);
+static void command_info(int argc, const char **argv, client_t *client, void *userdata);
+static void command_teleport(int argc, const char **argv, client_t *client, void *userdata);
+static void command_ban(int argc, const char **argv, client_t *client, void *userdata);
+static void command_ipban(int argc, const char **argv, client_t *client, void *userdata);
+static void command_whitelist(int argc, const char **argv, client_t *client, void *userdata);
+static void command_op(int argc, const char **argv, client_t *client, void *userdata);
+static void command_save(int argc, const char **argv, client_t *client, void *userdata);
+static void command_online(int argc, const char **argv, client_t *client, void *userdata);
+static void command_env(int argc, const char **argv, client_t *client, void *userdata);
+
+static commanddef_t *commands = NULL;
+static size_t num_commands = 0;
 
 bool readline_enabled = false;
 bool handling_readline = false;
 
-static commanddef_t commands[] = {
-	{ "ban", command_ban, "Manage username bans", true },
-	{ "ban-ip", command_ipban, "Manage IP bans", true },
-	{ "env", command_env, "Change map environmental settings", true },
-	{ "help", command_help, "List available commands", false },
-	{ "info", command_info, "View client info", false },
-	{ "op", command_op, "Manage server admins", true },
-	{ "online", command_online, "List online players", false },
-	{ "save", command_save, "Save the level", true },
-	{ "teleport", command_teleport, "Teleport a player", false },
-	{ "version", command_version, "Display software version", false },
-	{ "whitelist", command_whitelist, "Manage server whitelist", true },
-};
+void commands_init() {
+	command_quick_register("ban", command_ban, "Manage username bans", true, NULL);
+	command_quick_register("ban-ip", command_ipban, "Manage IP bans", true, NULL);
+	command_quick_register("env", command_env, "Change map environmental settings", true, NULL);
+	command_quick_register("online", command_online, "List online players", false, NULL);
+	command_quick_register("info", command_info, "View client info", false, NULL);
+	command_quick_register("op", command_op, "Manage server admins", true, NULL);
+	command_quick_register("save", command_save, "Save the level", true, NULL);
+	command_quick_register("teleport", command_teleport, "Teleport a player", false, NULL);
+	command_quick_register("version", command_version, "Display software version", false, NULL);
+	command_quick_register("whitelist", command_whitelist, "Manage server whitelist", true, NULL);
+	command_quick_register("eval", scripting_eval_command, "Evaluates Scheme code", true, NULL);
+}
+
+void command_quick_register(const char *name, commandfunc_t func, const char *helpline, bool op_only, void *userdata) {
+	commanddef_t cmd;
+	cmd.name = name;
+	cmd.func = func;
+	cmd.helpline = helpline;
+	cmd.op_only = op_only;
+	cmd.userdata = userdata;
+	command_register(&cmd);
+}
+
+void command_register(commanddef_t *cmd) {
+	size_t idx = num_commands++;
+	commands = realloc(commands, sizeof(commanddef_t) * num_commands);
+	memcpy(&commands[idx], cmd, sizeof(commanddef_t));
+}
 
 void command_execute(client_t *client, const char *command) {
 	char **args = NULL;
@@ -101,7 +126,7 @@ void command_execute(client_t *client, const char *command) {
 	if (args != NULL) {
 		commanddef_t *command = command_find(args[0]);
 		if (command != NULL) {
-			command->func(argc - 1, (const char **)args, client);
+			command->func(argc - 1, (const char **)args, client, command->userdata);
 		}
 		else {
 			client_send_message(client, msgtype_chat, "&cNo command exists with that name.");
@@ -187,7 +212,7 @@ void command_tick_readline(void) {
 }
 
 commanddef_t *command_find(const char *name) {
-	for (size_t i = 0; i < sizeof(commands) / sizeof(commanddef_t); i++) {
+	for (size_t i = 0; i < num_commands; i++) {
 		if (strcmp(name, commands[i].name) == 0) {
 			return &commands[i];
 		}
@@ -196,7 +221,7 @@ commanddef_t *command_find(const char *name) {
 	return NULL;
 }
 
-void command_version(int argc, const char **argv, client_t *client) {
+void command_version(int argc, const char **argv, client_t *client, void *userdata) {
 	(void) argc;
 	(void) argv;
 
@@ -206,11 +231,11 @@ void command_version(int argc, const char **argv, client_t *client) {
 	client_send_message(client, msgtype_chat, "source is available at https://dev.firestick.games/sean/thirty");
 }
 
-void command_help(int argc, const char **argv, client_t *client) {
+void command_help(int argc, const char **argv, client_t *client, void *userdata) {
 	(void) argc;
 	(void) argv;
 
-	for (size_t i = 0; i < sizeof(commands) / sizeof(commanddef_t); i++) {
+	for (size_t i = 0; i < num_commands; i++) {
 		commanddef_t *command = &commands[i];
 
 		if (command->op_only && !client->is_op) {
@@ -221,7 +246,7 @@ void command_help(int argc, const char **argv, client_t *client) {
 	}
 }
 
-void command_info(int argc, const char **argv, client_t *client) {
+void command_info(int argc, const char **argv, client_t *client, void *userdata) {
 	(void) argc;
 	(void) argv;
 
@@ -242,7 +267,7 @@ void command_info(int argc, const char **argv, client_t *client) {
 	}
 }
 
-void command_teleport(int argc, const char **argv, client_t *client) {
+void command_teleport(int argc, const char **argv, client_t *client, void *userdata) {
 	if (argc < 3) {
 		client_send_message(client, msgtype_chat, "&eSyntax: &f/%s [player] <x> <y> <z>", argv[0]);
 		return;
@@ -317,15 +342,15 @@ static void namelist_command(int argc, const char **argv, client_t *client, name
 	}
 }
 
-void command_ban(int argc, const char **argv, client_t *client) {
+void command_ban(int argc, const char **argv, client_t *client, void *userdata) {
 	namelist_command(argc, argv, client, server.banned_users, "banned", "unbanned", "Banned users");
 }
 
-void command_ipban(int argc, const char **argv, client_t *client) {
+void command_ipban(int argc, const char **argv, client_t *client, void *userdata) {
 	namelist_command(argc, argv, client, server.banned_ips, "banned", "unbanned", "Banned IPs");
 }
 
-void command_whitelist(int argc, const char **argv, client_t *client) {
+void command_whitelist(int argc, const char **argv, client_t *client, void *userdata) {
 	if (!config.server.enable_whitelist) {
 		client_send_message(client, msgtype_chat, "&cThe server whitelist is not enabled.");
 		return;
@@ -334,11 +359,11 @@ void command_whitelist(int argc, const char **argv, client_t *client) {
 	namelist_command(argc, argv, client, server.whitelist, "added", "removed", "Whitelisted users");
 }
 
-void command_op(int argc, const char **argv, client_t *client) {
+void command_op(int argc, const char **argv, client_t *client, void *userdata) {
 	namelist_command(argc, argv, client, server.ops, "opped", "deopped", "Operators");
 }
 
-void command_save(int argc, const char **argv, client_t *client) {
+void command_save(int argc, const char **argv, client_t *client, void *userdata) {
 	(void) argc;
 	(void) argv;
 
@@ -350,7 +375,7 @@ void command_save(int argc, const char **argv, client_t *client) {
 	map_save(server.map);
 }
 
-void command_online(int argc, const char **argv, client_t *client) {
+void command_online(int argc, const char **argv, client_t *client, void *userdata) {
 	(void) argc;
 	(void) argv;
 	char msg[256];
@@ -398,7 +423,9 @@ void command_online(int argc, const char **argv, client_t *client) {
 	}
 }
 
-void command_env(int argc, const char **argv, client_t *client) {
+void command_env(int argc, const char **argv, client_t *client, void *userdata) {
+	(void) userdata;
+
 	if (!client->is_op) {
 		client_send_message(client, msgtype_chat, "&cThis command is op-only");
 		return;
@@ -470,4 +497,19 @@ void command_env(int argc, const char **argv, client_t *client) {
 
 		map_set_weather(map, what);
 	}
+}
+
+static void scheme_cmd(int argc, const char **argv, client_t *client, void *userdata) {
+	SCM callback = (SCM) userdata;
+	SCM sclient = scm_from_pointer(client, NULL);
+	scm_call_2(callback, SCM_UNSPECIFIED, sclient);
+}
+
+SCM register_command(SCM name, SCM callback) {
+	command_quick_register(scm_to_locale_string(name), scheme_cmd, "", false, callback);
+	return SCM_UNSPECIFIED;
+}
+
+void commands_scripting_init() {
+	scm_c_define_gsubr("register-command", 2, 0, 0, register_command);
 }

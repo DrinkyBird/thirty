@@ -16,13 +16,9 @@
 
 #pragma once
 
-typedef struct client_s client_t;
+struct client_s;
 
-void commands_init();
-void command_execute(client_t *client, const char *command);
-
-void command_readline_init(void);
-void command_tick_readline(void);
-void command_readline_shutdown(void);
-
-extern client_t command_standin;
+void scripting_init();
+void scripting_shutdown();
+void scripting_eval(const char *code);
+void scripting_eval_command(int argc, const char **argv, struct client_s *client, void *userdata);
