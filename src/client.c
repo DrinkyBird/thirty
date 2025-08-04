@@ -1076,14 +1076,26 @@ void create_console_standin(void) {
 	command_standin.is_op = true;
 }
 
-SCM client_script_send_message(SCM clientp, SCM message) {
+SCM client_script_send_message(SCM clientp, SCM message, SCM msgtype) {
 	client_t *client = (client_t*)scm_to_pointer(clientp);
 	const char *messagep = scm_to_locale_string(message);
 
-	client_send_message(client, msgtype_chat, "%s", messagep);
+	msgtype_t typeval = msgtype_chat;
+	if (scm_is_symbol(msgtype)) {
+		const char *msgtypestr = scm_to_locale_string(scm_symbol_to_string(msgtype));
+		if (strcmp(msgtypestr, "status1") == 0) typeval = msgtype_status1;
+		else if (strcmp(msgtypestr, "status2") == 0) typeval = msgtype_status1;
+		else if (strcmp(msgtypestr, "status2") == 0) typeval = msgtype_status2;
+		else if (strcmp(msgtypestr, "bottomright1") == 0) typeval = msgtype_bottomright1;
+		else if (strcmp(msgtypestr, "bottomright2") == 0) typeval = msgtype_bottomright2;
+		else if (strcmp(msgtypestr, "bottomright3") == 0) typeval = msgtype_bottomright3;
+		else if (strcmp(msgtypestr, "announcement") == 0) typeval = msgtype_announcement;
+	}
+
+	client_send_message(client, typeval, "%s", messagep);
 	return SCM_UNSPECIFIED;
 }
 
 void client_scripting_init() {
-	scm_c_define_gsubr("send-message", 2, 0, 0, client_script_send_message);
+	scm_c_define_gsubr("send-message", 2, 1, 0, client_script_send_message);
 }
