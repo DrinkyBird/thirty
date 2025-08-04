@@ -1096,6 +1096,75 @@ SCM client_script_send_message(SCM clientp, SCM message, SCM msgtype) {
 	return SCM_UNSPECIFIED;
 }
 
+SCM client_script_get_name(SCM clientp) {
+	client_t *client = (client_t*)scm_to_pointer(clientp);
+	return scm_from_locale_string(client->name);
+}
+
+SCM client_script_get_spawned_p(SCM clientp) {
+	client_t *client = (client_t*)scm_to_pointer(clientp);
+	return scm_from_bool(client->spawned);
+}
+
+SCM client_script_get_op_p(SCM clientp) {
+	client_t *client = (client_t*)scm_to_pointer(clientp);
+	return scm_from_bool(client->is_op);
+}
+
+SCM client_script_get_x(SCM clientp) {
+	client_t *client = (client_t*)scm_to_pointer(clientp);
+	return scm_from_double((double)client->x);
+}
+
+SCM client_script_get_y(SCM clientp) {
+	client_t *client = (client_t*)scm_to_pointer(clientp);
+	return scm_from_double((double)client->y);
+}
+
+SCM client_script_get_z(SCM clientp) {
+	client_t *client = (client_t*)scm_to_pointer(clientp);
+	return scm_from_double((double)client->z);
+}
+
+SCM client_script_get_yaw(SCM clientp) {
+	client_t *client = (client_t*)scm_to_pointer(clientp);
+	return scm_from_double((double)client->yaw);
+}
+
+SCM client_script_get_pitch(SCM clientp) {
+	client_t *client = (client_t*)scm_to_pointer(clientp);
+	return scm_from_double((double)client->pitch);
+}
+
+SCM client_script_teleport(SCM clientp, SCM x, SCM y, SCM z, SCM yaw, SCM pitch) {
+	client_t *client = (client_t*)scm_to_pointer(clientp);
+	float newx = (float)scm_to_double(x);
+	float newy = (float)scm_to_double(y);
+	float newz = (float)scm_to_double(z);
+	float newyaw = client->yaw;
+	float newpitch = client->pitch;
+
+	if (scm_is_number(yaw)) {
+		newyaw = (float)scm_to_double(yaw);
+	}
+	if (scm_is_number(pitch)) {
+		newpitch = (float)scm_to_double(pitch);
+	}
+
+	client_teleport(client, newx, newy, newz, newyaw, newpitch);
+
+	return SCM_UNSPECIFIED;
+}
+
 void client_scripting_init() {
+	scm_c_define_gsubr("client-name", 1, 0, 0, client_script_get_name);
+	scm_c_define_gsubr("client-spawned?", 1, 0, 0, client_script_get_spawned_p);
+	scm_c_define_gsubr("client-op?", 1, 0, 0, client_script_get_op_p);
+	scm_c_define_gsubr("client-x", 1, 0, 0, client_script_get_x);
+	scm_c_define_gsubr("client-y", 1, 0, 0, client_script_get_y);
+	scm_c_define_gsubr("client-z", 1, 0, 0, client_script_get_z);
+	scm_c_define_gsubr("client-yaw", 1, 0, 0, client_script_get_yaw);
+	scm_c_define_gsubr("client-pitch", 1, 0, 0, client_script_get_pitch);
+	scm_c_define_gsubr("teleport", 4, 2, 0, client_script_teleport);
 	scm_c_define_gsubr("send-message", 2, 1, 0, client_script_send_message);
 }

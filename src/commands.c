@@ -72,6 +72,7 @@ void commands_init() {
 	command_quick_register("ban-ip", command_ipban, "Manage IP bans", true, NULL);
 	command_quick_register("env", command_env, "Change map environmental settings", true, NULL);
 	command_quick_register("online", command_online, "List online players", false, NULL);
+	command_quick_register("help", command_help, "List available commands", false, NULL);
 	command_quick_register("info", command_info, "View client info", false, NULL);
 	command_quick_register("op", command_op, "Manage server admins", true, NULL);
 	command_quick_register("save", command_save, "Save the level", true, NULL);

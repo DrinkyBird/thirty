@@ -1,3 +1,3 @@
 (register-command "test"
     (lambda (args client)
-        (send-message client "hi from guile" 'announcement)))
+        (send-message client (string-append "hi " (client-name client) " from guile") 'announcement)))

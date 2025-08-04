@@ -17,6 +17,38 @@ The _callback_ is a procedure taking two arguments (args, client).
 
 ### Clients
 
+#### `client-name` _client_
+
+Returns the client's name.
+
+#### `client-spawned?` _client_
+
+Whether the client has spawned.
+
+#### `client-op?` _client_
+
+Whether the client is an op.
+
+#### `client-x` _client_
+
+Client's X position.
+
+#### `client-y` _client_
+
+Client's Y position.
+
+#### `client-z` _client_
+
+Client's Z position.
+
+#### `client-yaw` _client_
+
+Client's yaw.
+
+#### `client-pitch` _client_
+
+Client's pitch.
+
 #### `send-message` _client_, _message_[, _type_]
 
 Sends a chat message to a client.
@@ -33,3 +65,8 @@ The parameter is optional and defaults to `'chat`.
 - **`'bottomright2`:** below `bottomright1`
 - **`'bottomright3`:** below `bottomright2`
 - **`'announcement`:** shown in large font in the centre
+
+#### `teleport` _client_, _x_, _y_, _z_[, _yaw_[, _pitch_]]
+
+Teleports the client to the given position.
+If _yaw_ and _pitch_ are not specified, the client's angles remain unchanged.
