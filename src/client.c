@@ -1080,20 +1080,27 @@ void create_console_standin(void) {
 	command_standin.is_op = true;
 }
 
+static SCM scheme_symbol_status1;
+static SCM scheme_symbol_status2;
+static SCM scheme_symbol_status3;
+static SCM scheme_symbol_bottomright1;
+static SCM scheme_symbol_bottomright2;
+static SCM scheme_symbol_bottomright3;
+static SCM scheme_symbol_announcement;
+
 SCM client_script_send_message(SCM clientp, SCM message, SCM msgtype) {
 	client_t *client = (client_t*)scm_to_pointer(clientp);
 	const char *messagep = scm_to_locale_string(message);
 
 	msgtype_t typeval = msgtype_chat;
 	if (scm_is_symbol(msgtype)) {
-		const char *msgtypestr = scm_to_locale_string(scm_symbol_to_string(msgtype));
-		if (strcmp(msgtypestr, "status1") == 0) typeval = msgtype_status1;
-		else if (strcmp(msgtypestr, "status2") == 0) typeval = msgtype_status1;
-		else if (strcmp(msgtypestr, "status2") == 0) typeval = msgtype_status2;
-		else if (strcmp(msgtypestr, "bottomright1") == 0) typeval = msgtype_bottomright1;
-		else if (strcmp(msgtypestr, "bottomright2") == 0) typeval = msgtype_bottomright2;
-		else if (strcmp(msgtypestr, "bottomright3") == 0) typeval = msgtype_bottomright3;
-		else if (strcmp(msgtypestr, "announcement") == 0) typeval = msgtype_announcement;
+		if (scm_is_eq(msgtype, scheme_symbol_status1)) typeval = msgtype_status1;
+		else if (scm_is_eq(msgtype, scheme_symbol_status2)) typeval = msgtype_status2;
+		else if (scm_is_eq(msgtype, scheme_symbol_status3)) typeval = msgtype_status3;
+		else if (scm_is_eq(msgtype, scheme_symbol_bottomright1)) typeval = msgtype_bottomright1;
+		else if (scm_is_eq(msgtype, scheme_symbol_bottomright2)) typeval = msgtype_bottomright2;
+		else if (scm_is_eq(msgtype, scheme_symbol_bottomright3)) typeval = msgtype_bottomright3;
+		else if (scm_is_eq(msgtype, scheme_symbol_announcement)) typeval = msgtype_announcement;
 	}
 
 	client_send_message(client, typeval, "%s", messagep);
@@ -1161,6 +1168,14 @@ SCM client_script_teleport(SCM clientp, SCM x, SCM y, SCM z, SCM yaw, SCM pitch)
 }
 
 void client_scripting_init() {
+	scheme_symbol_status1 = scm_from_locale_symbol("status1");
+	scheme_symbol_status2 = scm_from_locale_symbol("status2");
+	scheme_symbol_status3 = scm_from_locale_symbol("status3");
+	scheme_symbol_bottomright1 = scm_from_locale_symbol("bottomright1");
+	scheme_symbol_bottomright2 = scm_from_locale_symbol("bottomright2");
+	scheme_symbol_bottomright3 = scm_from_locale_symbol("bottomright3");
+	scheme_symbol_announcement = scm_from_locale_symbol("announcement");
+
 	scm_c_define_gsubr("client-name", 1, 0, 0, client_script_get_name);
 	scm_c_define_gsubr("client-spawned?", 1, 0, 0, client_script_get_spawned_p);
 	scm_c_define_gsubr("client-op?", 1, 0, 0, client_script_get_op_p);
