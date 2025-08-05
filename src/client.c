@@ -202,6 +202,8 @@ void client_tick(client_t *client) {
 
 					server_broadcast("&e%s &fjoined the game.", client->name);
 
+					scripting_fire_event("client-spawned", scm_list_1(scm_from_pointer(client, NULL)));
+
 					break;
 				}
 				else {
@@ -460,6 +462,16 @@ void client_handle_in_buffer(client_t *client, buffer_t *in_buffer, size_t r) {
 					buffer_write_uint8(client->out_buffer, current);
 					client_flush(client);
 				} else {
+					scripting_fire_event("client-set-block", scm_list_n(
+						scm_from_pointer(client, NULL),
+						scm_from_pointer(server.map, NULL),
+						scm_from_uint16(x),
+						scm_from_uint16(y),
+						scm_from_uint16(z),
+						blockinfo[current].symbol,
+						blockinfo[block].symbol,
+						SCM_UNDEFINED
+					));
 					map_set(server.map, x, y, z, is_break ? 0x00 : block);
 				}
 
@@ -483,6 +495,7 @@ void client_handle_in_buffer(client_t *client, buffer_t *in_buffer, size_t r) {
 					command_execute(client, msg);
 				}
 				else if (client->spawned) {
+					scripting_fire_event("client-message", scm_list_2(scm_from_pointer(client, NULL), scm_from_locale_string(msg)));
 					server_broadcast("&e%s: &f%s", client->name, msg);
 				}
 
@@ -619,6 +632,8 @@ void client_login(client_t *client) {
 		}
 	}
 
+	scripting_fire_event("client-connect", scm_list_1(scm_from_pointer(client, NULL)));
+
 	if (!customblocks) {
 		client_send_level(client);
 	}
@@ -734,6 +749,8 @@ void client_start_fast_mapsave(client_t *client) {
 }
 
 void client_disconnect(client_t *client, const char *msg) {
+	scripting_fire_event("client-disconnect", scm_list_2(scm_from_pointer(client, NULL), scm_from_locale_string(msg)));
+
 	if (client->connected) {
 		buffer_write_uint8(client->out_buffer, packet_player_disconnect);
 		buffer_write_mcstr(client->out_buffer, msg, client_supports_extension(client, "FullCP437", 1));

@@ -23,6 +23,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <time.h>
+#include <libguile.h>
 #include "server.h"
 #include "buffer.h"
 #include "client.h"
@@ -35,6 +36,7 @@
 #include "log.h"
 #include "namelist.h"
 #include "commands.h"
+#include "scripting.h"
 
 #ifndef _WIN32
 #include <netinet/tcp.h>
@@ -154,6 +156,7 @@ void server_shutdown(void) {
 void server_tick(void) {
 	command_tick_readline();
 	server_accept();
+	scripting_fire_event("server-tick", SCM_EOL);
 	map_tick(server.map);
 
 	for (size_t i = 0; i < server.num_clients; i++) {

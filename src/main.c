@@ -50,6 +50,7 @@ void inner_main(void *closure, int argc, char *argv[]) {
 	scripting_init();
 
 	command_readline_init();
+	scripting_fire_event("server-ready", SCM_EOL);
 	log_printf(log_info, "Ready! Type 'help' for a list of commands.");
 
 	while (running) {

@@ -25,9 +25,16 @@ The _callback_ is a procedure taking relevant arguments.
 
 #### Event types
 
-| Name          | Parameters           | Description              |
-|---------------|----------------------|--------------------------|
-| `client-move` | _client_ _x_ _y_ _z_ | Client position changed. |
+| Name                | Parameters                             | Description                                                                                      |
+|---------------------|----------------------------------------|--------------------------------------------------------------------------------------------------|
+| `server-ready`      |                                        | Server has started.                                                                              |
+| `server-tick`       |                                        | Server ticked.                                                                                   |
+| `client-connect`    | _client_                               | Client is connecting to the server. At this point, login and CPE information has been completed. |
+| `client-spawned`    | _client_                               | Client spawned in the level.                                                                     |
+| `client-disconnect` | _client_ _msg_                         | Client has left the server.                                                                      |
+| `client-move`       | _client_ _x_ _y_ _z_                   | Client position changed.                                                                         |
+| `client-message`    | _client_ _msg_                         | Client sent a chat message.                                                                      |
+| `client-set-block`  | _client_ _map_ _x_ _y_ _z_ _old_ _new_ | Client changed a block. The _old_ and _new_ blocks are symbols, see [Blocks](#blocks).           |
 
 ### Clients
 
