@@ -503,7 +503,12 @@ void command_env(int argc, const char **argv, client_t *client, void *userdata) 
 static void scheme_cmd(int argc, const char **argv, client_t *client, void *userdata) {
 	SCM callback = (SCM) userdata;
 	SCM sclient = scm_from_pointer(client, NULL);
-	scm_call_2(callback, SCM_UNSPECIFIED, sclient);
+
+	SCM argslist = SCM_EOL;
+	for (int i = argc; i > 0; i--) {
+		argslist = scm_cons(scm_from_locale_string(argv[i]), argslist);
+	}
+	scm_call_2(callback, argslist, sclient);
 }
 
 SCM register_command(SCM name, SCM callback) {
