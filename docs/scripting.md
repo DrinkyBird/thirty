@@ -10,7 +10,7 @@ You have been warned.
 
 ### Commands
 
-#### `register-command` _name_, _callback_
+#### `register-command` _name_ _callback_
 
 Registers a command with the given _name_.
 The _callback_ is a procedure taking two arguments (args, client).
@@ -49,7 +49,7 @@ Client's yaw.
 
 Client's pitch.
 
-#### `send-message` _client_, _message_[, _type_]
+#### `send-message` _client_ _message_ [_type_]
 
 Sends a chat message to a client.
 
@@ -66,7 +66,7 @@ The parameter is optional and defaults to `'chat`.
 - **`'bottomright3`:** below `bottomright2`
 - **`'announcement`:** shown in large font in the centre
 
-#### `teleport` _client_, _x_, _y_, _z_[, _yaw_[, _pitch_]]
+#### `teleport` _client_ _x_ _y_ _z_ [_yaw_ [_pitch_]]
 
 Teleports the client to the given position.
 If _yaw_ and _pitch_ are not specified, the client's angles remain unchanged.
@@ -163,11 +163,11 @@ Returns the depth (Y size) of the given map.
 
 Returns the height (Z size) of the given map.
 
-#### `map-block` _map_, _x_, _y_, _z_
+#### `map-block` _map_ _x_ _y_ _z_
 
 Returns the block at the given coordinates as a symbol.
 
-#### `map-set-block!` _map_, _x_, _y_, _z_, _block_
+#### `map-set-block!` _map_ _x_ _y_ _z_ _block_
 
 Sets the block at the given coordinates.
 _block_ can be a symbol or numeric ID.
