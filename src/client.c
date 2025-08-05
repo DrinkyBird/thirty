@@ -1184,6 +1184,15 @@ SCM client_script_teleport(SCM clientp, SCM x, SCM y, SCM z, SCM yaw, SCM pitch)
 	return SCM_UNSPECIFIED;
 }
 
+SCM client_script_supports_extension_p(SCM clientp, SCM extension, SCM version) {
+	client_t *client = (client_t*)scm_to_pointer(clientp);
+	const char *extname = scm_to_locale_string(extension);
+	int versionint = scm_to_int32(version);
+
+	bool result = client_supports_extension(client, extname, versionint);
+	return scm_from_bool(result);
+}
+
 void client_scripting_init() {
 	scheme_symbol_status1 = scm_from_locale_symbol("status1");
 	scheme_symbol_status2 = scm_from_locale_symbol("status2");
@@ -1203,4 +1212,5 @@ void client_scripting_init() {
 	scm_c_define_gsubr("client-pitch", 1, 0, 0, client_script_get_pitch);
 	scm_c_define_gsubr("teleport", 4, 2, 0, client_script_teleport);
 	scm_c_define_gsubr("send-message", 2, 1, 0, client_script_send_message);
+	scm_c_define_gsubr("client-supports-extension?", 3, 0, 0, client_script_supports_extension_p);
 }

@@ -92,6 +92,10 @@ The parameter is optional and defaults to `'chat`.
 Teleports the client to the given position.
 If _yaw_ and _pitch_ are not specified, the client's angles remain unchanged.
 
+#### `client-supports-extension?` _client_ _extension_ _version_
+
+Returns `#t` if the _client_ supports the given [CPE extension](cpe.md), `#f` otherwise.
+
 ### Maps
 
 #### Blocks
