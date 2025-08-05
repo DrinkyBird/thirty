@@ -50,6 +50,11 @@ Whether the client has spawned.
 
 Whether the client is an op.
 
+#### `client-map` _client_
+
+Returns the client's current map.
+Even though the server currently only has one map, the map procedures take a map pointer for future-proofing.
+
 #### `client-x` _client_
 
 Client's X position.

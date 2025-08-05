@@ -12,12 +12,12 @@
 
 (register-command "block"
     (lambda (args client)
-        (map-set-block! (server-map) 5 60 5 'cyan_wool)))
+        (map-set-block! (client-map client) 5 60 5 'cyan_wool)))
 
 (handle-event 'client-move
     (lambda (client x y z)
         (map-set-block!
-            (server-map)
+            (client-map client)
             x
             (- y 2)
             z

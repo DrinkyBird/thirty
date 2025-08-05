@@ -1139,6 +1139,10 @@ SCM client_script_get_op_p(SCM clientp) {
 	return scm_from_bool(client->is_op);
 }
 
+SCM client_script_get_map(SCM clientp) {
+	return scm_from_pointer(server.map, NULL);
+}
+
 SCM client_script_get_x(SCM clientp) {
 	client_t *client = (client_t*)scm_to_pointer(clientp);
 	return scm_from_double((double)client->x);
@@ -1205,6 +1209,7 @@ void client_scripting_init() {
 	scm_c_define_gsubr("client-name", 1, 0, 0, client_script_get_name);
 	scm_c_define_gsubr("client-spawned?", 1, 0, 0, client_script_get_spawned_p);
 	scm_c_define_gsubr("client-op?", 1, 0, 0, client_script_get_op_p);
+	scm_c_define_gsubr("client-map", 1, 0, 0, client_script_get_map);
 	scm_c_define_gsubr("client-x", 1, 0, 0, client_script_get_x);
 	scm_c_define_gsubr("client-y", 1, 0, 0, client_script_get_y);
 	scm_c_define_gsubr("client-z", 1, 0, 0, client_script_get_z);
