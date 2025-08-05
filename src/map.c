@@ -16,6 +16,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <libguile.h>
 #include "map.h"
 #include "mapgen.h"
 #include "buffer.h"
@@ -217,8 +218,75 @@ void map_set_weather(map_t *map, weathertype_t type) {
 		if (!client_supports_extension(client, "EnvWeatherType", 1)) {
 			continue;
 		}
-
+		
 		buffer_write_uint8(client->out_buffer, packet_env_set_weather_type);
 		buffer_write_uint8(client->out_buffer, (uint8_t)type);
 	}
+}
+
+SCM map_script_get_server_map() {
+	return scm_from_pointer(server.map, NULL);
+}
+
+SCM map_script_get_width(SCM mapp) {
+	map_t *map = scm_to_pointer(mapp);
+	return scm_from_size_t(map->width);
+}
+
+SCM map_script_get_depth(SCM mapp) {
+	map_t *map = scm_to_pointer(mapp);
+	return scm_from_size_t(map->depth);
+}
+
+SCM map_script_get_height(SCM mapp) {
+	map_t *map = scm_to_pointer(mapp);
+	return scm_from_size_t(map->height);
+}
+
+SCM map_script_get_block(SCM mapp, SCM x, SCM y, SCM z) {
+	map_t *map = scm_to_pointer(mapp);
+	size_t xp = (size_t)scm_to_int64(x);
+	size_t yp = (size_t)scm_to_int64(y);
+	size_t zp = (size_t)scm_to_int64(z);
+
+	return scm_from_int8(map_get(map, xp, yp, zp));
+}
+
+SCM map_script_set_block(SCM mapp, SCM x, SCM y, SCM z, SCM block) {
+	map_t *map = scm_to_pointer(mapp);
+	size_t xp = (size_t)scm_to_int64(x);
+	size_t yp = (size_t)scm_to_int64(y);
+	size_t zp = (size_t)scm_to_int64(z);
+	uint8_t blockp = block_get_by_scm(block);
+
+	map_set(map, xp, yp, zp, blockp);
+
+	return SCM_UNSPECIFIED;
+}
+
+SCM map_script_symbol_to_blockid(SCM symbol) {
+	if (!scm_is_symbol(symbol)) {
+		return SCM_UNSPECIFIED;
+	}
+
+	return scm_from_int32((int32_t)block_get_by_scm(symbol));
+}
+
+SCM map_script_blockid_to_symbol(SCM id) {
+	if (!scm_is_number(id)) {
+		return SCM_UNSPECIFIED;
+	}
+
+	return (SCM)blockinfo[block_get_by_scm(id)].symbol;
+}
+
+void map_scripting_init() {
+	scm_c_define_gsubr("server-map", 0, 0, 0, map_script_get_server_map);
+	scm_c_define_gsubr("map-width", 1, 0, 0, map_script_get_width);
+	scm_c_define_gsubr("map-depth", 1, 0, 0, map_script_get_depth);
+	scm_c_define_gsubr("map-height", 1, 0, 0, map_script_get_height);
+	scm_c_define_gsubr("map-block", 4, 0, 0, map_script_get_block);
+	scm_c_define_gsubr("map-set-block!", 5, 0, 0, map_script_set_block);
+	scm_c_define_gsubr("symbol->blockid", 1, 0, 0, map_script_symbol_to_blockid);
+	scm_c_define_gsubr("blockid->symbol", 1, 0, 0, map_script_blockid_to_symbol);
 }

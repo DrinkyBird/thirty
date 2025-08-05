@@ -41,6 +41,11 @@ void inner_main(void *closure, int argc, char *argv[]) {
 	(void) argc;
 	(void) argv;
 
+	blocks_init();
+	if (!server_init()) {
+		return;
+	}
+
 	commands_init();
 	scripting_init();
 
@@ -87,7 +92,6 @@ int main(int argc, char *argv[]) {
 	log_printf(log_info, "Thirty %s", HG_CHANGESET_HASH);
 
 	config_init(config_file);
-	blocks_init();
 
 #ifdef _WIN32
 	{
@@ -99,13 +103,8 @@ int main(int argc, char *argv[]) {
 	signal(SIGINT, signal_handler);
 	signal(SIGTERM, signal_handler);
 
-	if (!server_init()) {
-		goto cleanup;
-	}
-
 	scm_boot_guile(argc, argv, inner_main, NULL);
 
-cleanup:
 	command_readline_shutdown();
 	server_shutdown();
 	config_destroy();

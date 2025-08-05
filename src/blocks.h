@@ -16,6 +16,7 @@
 
 #pragma once
 #include <stdint.h>
+#include <libguile.h>
 
 #define CPE_CUSTOMBLOCKS_LEVEL 1
 
@@ -24,74 +25,9 @@ typedef struct map_s map_t;
 typedef void (*blocktickfunc_t)(map_t *map, size_t x, size_t y, size_t z, uint8_t block);
 
 enum {
-	air,
-	stone,
-	grass,
-	dirt,
-	cobblestone,
-	wood_planks,
-	sapling,
-	bedrock,
-	water,
-	water_still,
-	lava,
-	lava_still,
-	sand,
-	gravel,
-	gold_ore,
-	iron_ore,
-	coal_ore,
-	wood,
-	leaves,
-	sponge,
-	glass,
-	red_wool,
-	orange_wool,
-	yellow_wool,
-	lime_wool,
-	green_wool,
-	aquagreen_wool,
-	cyan_wool,
-	blue_wool,
-	purple_wool,
-	indigo_wool,
-	violet_wool,
-	magenta_wool,
-	pink_wool,
-	black_wool,
-	grey_wool,
-	white_wool,
-	dandelion,
-	rose,
-	brown_mushroom,
-	red_mushroom,
-	gold_block,
-	iron_block,
-	double_slab,
-	slab,
-	bricks,
-	tnt,
-	bookshelf,
-	mossy_cobblestoe,
-	obsidian,
-
-	// CPE blocks.
-	cobblestone_slab,
-	rope,
-	sandstone,
-	snow,
-	fire,
-	light_pink_wool,
-	forest_green_wool,
-	brown_wool,
-	deep_blue,
-	turquoise,
-	ice,
-	ceramic_tile,
-	magma,
-	pillar,
-	crate,
-	stone_brick,
+#define X(n) n,
+#include "blocks.inc"
+#undef X
 
 	num_blocks
 };
@@ -110,6 +46,9 @@ typedef struct blockinfo_s {
 	blocktickfunc_t random_tickfunc;
 	blocktickfunc_t placefunc;
 	blocktickfunc_t breakfunc;
+
+	const char *name;
+	void *symbol;
 } blockinfo_t;
 
 extern blockinfo_t blockinfo[num_blocks];
@@ -117,3 +56,5 @@ extern blockinfo_t blockinfo[num_blocks];
 void blocks_init(void);
 
 uint8_t block_get_fallback(uint8_t block);
+
+uint8_t block_get_by_scm(SCM x);

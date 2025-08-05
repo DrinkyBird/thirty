@@ -17,6 +17,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <stdbool.h>
+#include <libguile.h>
 #include "blocks.h"
 #include "map.h"
 #include "mapgen.h"
@@ -44,6 +45,13 @@ void blocks_init(void) {
 		blockinfo[i].block_light = true;
 		blockinfo[i].colour = 0xFF00FF;
 	}
+
+#define X(n) do { \
+		blockinfo[n].name = #n; \
+		blockinfo[n].symbol = scm_from_locale_symbol(#n); \
+	} while (0);
+#include "blocks.inc"
+#undef X
 
 	blockinfo[air].solid = false;
 	blockinfo[air].block_light = false;
@@ -306,4 +314,19 @@ uint8_t block_get_fallback(uint8_t block) {
 
 		default: return block;
 	}
+}
+
+uint8_t block_get_by_scm(SCM x) {
+	if (scm_is_symbol(x)) {
+		for (size_t i = 0; i < num_blocks; i++) {
+			if (scm_is_eq(blockinfo[i].symbol, x)) {
+				return i;
+			}
+		}
+	}
+	else if (scm_is_number(x)) {
+		return (uint8_t)scm_to_int8(x);
+	}
+
+	return 0;
 }

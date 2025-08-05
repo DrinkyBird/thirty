@@ -21,10 +21,12 @@
 
 extern void commands_scripting_init();
 extern void client_scripting_init();
+extern void map_scripting_init();
 
 void scripting_init() {
     commands_scripting_init();
     client_scripting_init();
+    map_scripting_init();
 
     scm_c_primitive_load("test.scm");
 }
