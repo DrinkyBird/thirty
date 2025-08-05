@@ -16,6 +16,7 @@
 
 #include <libguile.h>
 #include <string.h>
+#include <stb_ds.h>
 #include "scripting.h"
 #include "client.h"
 
@@ -23,12 +24,47 @@ extern void commands_scripting_init();
 extern void client_scripting_init();
 extern void map_scripting_init();
 
+static SCM scripting_scm_handle_event(SCM eventname, SCM callback);
+
+static struct { char *key; SCM *value; } *event_map;
+
 void scripting_init() {
+    scm_c_define_gsubr("handle-event", 2, 0, 0, scripting_scm_handle_event);
+
     commands_scripting_init();
     client_scripting_init();
     map_scripting_init();
 
     scm_c_primitive_load("test.scm");
+}
+
+SCM scripting_scm_handle_event(SCM eventname, SCM callback) {
+    char *name = scm_to_locale_string(scm_symbol_to_string(eventname));
+
+    SCM *arr = NULL;
+    if (shgeti(event_map, name) != -1) {
+        arrput(arr, callback);
+    }
+    arrput(arr, callback);
+    shput(event_map, name, arr);
+
+    return SCM_UNDEFINED;
+}
+
+void scripting_fire_event(const char *name, SCM args) {
+    if (shgeti(event_map, name) == -1) {
+        return;
+    }
+
+    SCM *arr = shget(event_map, name);
+    if (arr == NULL) {
+        return;
+    }
+
+    for (size_t i = 0; i < arrlenu(arr); i++) {
+        SCM callback = arr[i];
+        scm_apply_0(callback, args);
+    }
 }
 
 void scripting_eval(const char *code) {

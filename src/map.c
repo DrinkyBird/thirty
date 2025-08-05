@@ -245,18 +245,18 @@ SCM map_script_get_height(SCM mapp) {
 
 SCM map_script_get_block(SCM mapp, SCM x, SCM y, SCM z) {
 	map_t *map = scm_to_pointer(mapp);
-	size_t xp = (size_t)scm_to_int64(x);
-	size_t yp = (size_t)scm_to_int64(y);
-	size_t zp = (size_t)scm_to_int64(z);
+	size_t xp = (size_t)scm_to_double(x);
+	size_t yp = (size_t)scm_to_double(y);
+	size_t zp = (size_t)scm_to_double(z);
 
 	return scm_from_int8(map_get(map, xp, yp, zp));
 }
 
 SCM map_script_set_block(SCM mapp, SCM x, SCM y, SCM z, SCM block) {
 	map_t *map = scm_to_pointer(mapp);
-	size_t xp = (size_t)scm_to_int64(x);
-	size_t yp = (size_t)scm_to_int64(y);
-	size_t zp = (size_t)scm_to_int64(z);
+	size_t xp = (size_t)scm_to_double(x);
+	size_t yp = (size_t)scm_to_double(y);
+	size_t zp = (size_t)scm_to_double(z);
 	uint8_t blockp = block_get_by_scm(block);
 
 	map_set(map, xp, yp, zp, blockp);

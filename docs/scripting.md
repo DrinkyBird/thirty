@@ -15,6 +15,20 @@ You have been warned.
 Registers a command with the given _name_.
 The _callback_ is a procedure taking two arguments (args, client).
 
+### Events
+
+#### `handle-event` _event_ _callback_
+
+Registers a handler for _event_.
+The event name can be a string or symbol.
+The _callback_ is a procedure taking relevant arguments.
+
+#### Event types
+
+| Name          | Parameters           | Description              |
+|---------------|----------------------|--------------------------|
+| `client-move` | _client_ _x_ _y_ _z_ | Client position changed. |
+
 ### Clients
 
 #### `client-name` _client_

@@ -22,3 +22,4 @@ void scripting_init();
 void scripting_shutdown();
 void scripting_eval(const char *code);
 void scripting_eval_command(int argc, const char **argv, struct client_s *client, void *userdata);
+void scripting_fire_event(const char *name, SCM args);

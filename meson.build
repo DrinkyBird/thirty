@@ -77,6 +77,8 @@ source_files = [
     'lib/md5.h',
     'lib/sha1.c',
     'lib/sha1.h',
+    'lib/stb_ds.c',
+    'lib/stb_ds.h',
     'lib/stb_image_write.c',
     'lib/stb_image_write.h',
 

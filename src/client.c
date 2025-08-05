@@ -38,6 +38,7 @@
 #include "log.h"
 #include "version.h"
 #include "commands.h"
+#include "scripting.h"
 
 #define BUFFER_SIZE (32 * 1024)
 #define PING_INTERVAL (1.0)
@@ -505,6 +506,9 @@ void client_handle_in_buffer(client_t *client, buffer_t *in_buffer, size_t r) {
 				client->z = util_fixed2float(z);
 				client->yaw = util_fixed2degrees(yaw);
 				client->pitch = util_fixed2degrees(pitch);
+
+				SCM eventargs = scm_list_4(scm_from_pointer(client, NULL), scm_from_double(client->x), scm_from_double(client->y), scm_from_double(client->z));
+				scripting_fire_event("client-move", eventargs);
 
 				for (size_t i = 0; i < server.num_clients; i++) {
 					client_t *other = &server.clients[i];
