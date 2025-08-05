@@ -193,3 +193,7 @@ Converts the given Scheme symbol to a numeric ID.
 #### `blockid->symbol` _id_
 
 Converts the given numeric block ID to a Scheme symbol.
+
+#### `map-set-weather!` _map_ _type_
+
+Sets the map weather. _type_ can be either `'clear`, `'rain`, or `'snow`.

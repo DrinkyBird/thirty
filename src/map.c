@@ -280,7 +280,30 @@ SCM map_script_blockid_to_symbol(SCM id) {
 	return (SCM)blockinfo[block_get_by_scm(id)].symbol;
 }
 
+static SCM scheme_symbol_clear;
+static SCM scheme_symbol_rain;
+static SCM scheme_symbol_snow;
+
+SCM map_script_set_weather(SCM mapp, SCM type) {
+	map_t *map = scm_to_pointer(mapp);
+	if (scm_is_eq(type, scheme_symbol_clear)) {
+		map_set_weather(map, weather_clear);
+	}
+	else if (scm_is_eq(type, scheme_symbol_rain)) {
+		map_set_weather(map, weather_rain);
+	}
+	else if (scm_is_eq(type, scheme_symbol_snow)) {
+		map_set_weather(map, weather_snow);
+	}
+
+	return SCM_UNSPECIFIED;
+}
+
 void map_scripting_init() {
+	scheme_symbol_clear = scm_from_locale_symbol("clear");
+	scheme_symbol_rain = scm_from_locale_symbol("rain");
+	scheme_symbol_snow = scm_from_locale_symbol("snow");
+
 	scm_c_define_gsubr("server-map", 0, 0, 0, map_script_get_server_map);
 	scm_c_define_gsubr("map-width", 1, 0, 0, map_script_get_width);
 	scm_c_define_gsubr("map-depth", 1, 0, 0, map_script_get_depth);
@@ -289,4 +312,5 @@ void map_scripting_init() {
 	scm_c_define_gsubr("map-set-block!", 5, 0, 0, map_script_set_block);
 	scm_c_define_gsubr("symbol->blockid", 1, 0, 0, map_script_symbol_to_blockid);
 	scm_c_define_gsubr("blockid->symbol", 1, 0, 0, map_script_blockid_to_symbol);
+	scm_c_define_gsubr("map-set-weather!", 2, 0, 0, map_script_set_weather);
 }
