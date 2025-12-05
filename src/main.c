@@ -26,6 +26,7 @@
 #include "util.h"
 #include "config.h"
 #include "log.h"
+#include "scripting.h"
 #include "version.h"
 
 static void signal_handler(int signum);
@@ -79,6 +80,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	commands_init();
+	scripting_init();
 	log_printf(log_info, "Ready! Type 'help' for a list of commands.");
 
 	while (running) {

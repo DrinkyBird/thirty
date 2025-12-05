@@ -64,6 +64,8 @@ source_files = [
     'src/perlin.h',
     'src/rng.c',
     'src/rng.h',
+    'src/scripting.c',
+    'src/scripting.h',
     'src/server.c',
     'src/server.h',
     'src/str.c',
@@ -89,6 +91,7 @@ deps = [
     dependency('threads', required: true),
     dependency('zlib', required: true),
     dependency('libcurl', required: true),
+    dependency('lua5.4', required: true),
     dependency('openmp'),
     readline,
 ]
