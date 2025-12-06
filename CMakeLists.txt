@@ -66,7 +66,7 @@ add_executable(thirty
 )
 
 add_custom_target(hginfo
-        COMMAND hg identify -T "#pragma once\\n#define HG_CHANGESET_HASH \"{ifeq(latesttag, 'null', '', latesttag)}{ifeq(latesttagdistance, 0, '', '+{latesttagdistance}.{node|short}')}{if(topic, '-{topic}')}\"\\n" -r . > ${GENERATED_DIR}/hginfo.h
+        COMMAND hg identify --config-file "${CMAKE_SOURCE_DIR}/hginfo.tmpl" -T "{cheader}" -r . > ${GENERATED_DIR}/hginfo.h
         BYPRODUCTS ${GENERATED_DIR}/hginfo.h
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "Updating Mercurial revision info"

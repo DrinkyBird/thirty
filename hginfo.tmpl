@@ -1,0 +1,3 @@
+[templatealias]
+hginfo = "#pragma once\n#define HG_CHANGESET_HASH \"{ifeq(latesttag, 'null', '', latesttag)}{ifeq(latesttagdistance, 0, '', '+{latesttagdistance}.{node|short}')}{if(topic, '-{topic}')}\"\n"
+cheader = "#pragma once\n#define HG_CHANGESET_HASH \"{hginfo}\"\n"
