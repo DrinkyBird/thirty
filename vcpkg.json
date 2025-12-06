@@ -1,0 +1,9 @@
+{
+  "dependencies": [
+    "zlib",
+    "curl",
+    "readline",
+    "pkgconf",
+    "pthreads"
+  ]
+}
