@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(thirty LANGUAGES C VERSION 0.1.0)
 
+set(CMAKE_C_STANDARD 11)
+
 find_package(Threads REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(CURL REQUIRED)
