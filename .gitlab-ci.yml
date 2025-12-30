@@ -12,7 +12,7 @@ build:
   tags:
     - $ARCH
   script:
-    - meson setup build
+    - meson setup build -Dlua_library=lua5.4
     - ninja -C build
   parallel:
     matrix:
@@ -28,7 +28,7 @@ scan-build:
   tags:
     - $ARCH
   script:
-    - meson setup build
+    - meson setup build -Dlua_library=lua5.4
     - ninja -C build scan-build
   parallel:
     matrix:

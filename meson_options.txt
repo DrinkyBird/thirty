@@ -1,1 +1,2 @@
 option('use_readline', type: 'feature', value: 'auto')
+option('lua_library', type: 'string', value: 'lua', description: 'pkg-config name for lua library')

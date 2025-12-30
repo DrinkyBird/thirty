@@ -10,3 +10,5 @@ function testcmd(client)
 end
 
 commands.register("luatest", testcmd)
+
+print("Script loaded, using " .. _VERSION)
