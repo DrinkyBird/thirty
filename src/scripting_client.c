@@ -35,7 +35,8 @@ static const luaL_Reg client_meta_methods[] = {
 };
 
 void scripting_push_client(lua_State *L, client_t *client) {
-	lua_pushlightuserdata(L, client);
+	void **ud = lua_newuserdata(L, sizeof(void *));
+	*ud = client;
 	luaL_setmetatable(L, METATABLE_CLIENT);
 }
 
@@ -49,8 +50,8 @@ void client_scripting_init(lua_State *L) {
 }
 
 static client_t *getclient(lua_State *L) {
-	void *p = luaL_checkudata(L, 1, METATABLE_CLIENT);
-	return (client_t *)p;
+	void **p = luaL_checkudata(L, 1, METATABLE_CLIENT);
+	return (client_t *)*p;
 }
 
 int scripting_client_get_name(lua_State *L) {

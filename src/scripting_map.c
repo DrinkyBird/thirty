@@ -23,7 +23,8 @@ static const luaL_Reg map_meta_methods[] = {
 };
 
 void scripting_push_map(lua_State *L, map_t *map) {
-	lua_pushlightuserdata(L, map);
+	void **ud = lua_newuserdata(L, sizeof(void *));
+	*ud = map;
 	luaL_setmetatable(L, METATABLE_MAP);
 }
 
@@ -37,8 +38,8 @@ void map_scripting_init(lua_State *L) {
 }
 
 static map_t *getmap(lua_State *L) {
-	void *p = luaL_checkudata(L, 1, METATABLE_MAP);
-	return (map_t *)p;
+	void **p = luaL_checkudata(L, 1, METATABLE_MAP);
+	return (map_t *)*p;
 }
 
 int scripting_map_get_size(lua_State *L) {
