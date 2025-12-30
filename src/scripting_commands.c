@@ -4,6 +4,7 @@
 #include "commands.h"
 #include "log.h"
 #include "scripting.h"
+#include "client.h"
 
 extern lua_State *L;
 
@@ -63,7 +64,10 @@ void command_callback(commandctx_t *ctx) {
 		log_printf(log_error, "Not a Lua function");
 		return;
 	}
-	int r = lua_pcall(L, 0, 0, 0);
+
+	scripting_push_client(L, ctx->client);
+
+	int r = lua_pcall(L, 1, 0, 0);
 	if (r != 0) {
 		scripting_handle_error(L);
 	}

@@ -7,6 +7,7 @@
 
 lua_State *L = NULL;
 
+void client_scripting_init(lua_State *L);
 void commands_scripting_init(void);
 
 static int fn_print(lua_State *L);
@@ -18,6 +19,7 @@ void scripting_init(void) {
 	lua_pushcfunction(L, fn_print);
 	lua_setglobal(L, "print");
 
+	client_scripting_init(L);
 	commands_scripting_init();
 
 	if (luaL_dofile(L, "test.lua") != 0) {
