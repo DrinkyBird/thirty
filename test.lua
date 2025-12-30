@@ -6,7 +6,8 @@ function testcmd(client)
 	yaw, pitch = client:get_angles()
 	print(x, y, z)
 	print(yaw, pitch)
-	client:teleport(12, 24, 56)
+	local map = client:get_map()
+	map:set(x, y, z, 15)
 end
 
 commands.register("luatest", testcmd)

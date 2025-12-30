@@ -68,6 +68,7 @@ source_files = [
     'src/scripting.h',
     'src/scripting_client.c',
     'src/scripting_commands.c',
+    'src/scripting_map.c',
     'src/server.c',
     'src/server.h',
     'src/str.c',

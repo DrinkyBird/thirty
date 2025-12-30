@@ -5,11 +5,13 @@
 #include "commands.h"
 #include "client.h"
 #include "log.h"
+#include "server.h"
 #include "str.h"
 
 #define METATABLE_CLIENT "Client"
 
 static int scripting_client_get_name(lua_State *L);
+static int scripting_client_get_map(lua_State *L);
 static int scripting_client_get_position(lua_State *L);
 static int scripting_client_get_angles(lua_State *L);
 static int scripting_client_send_message(lua_State *L);
@@ -18,6 +20,7 @@ static int scripting_client_tostring(lua_State *L);
 
 static const luaL_Reg client_methods[] = {
 	{ "get_name", scripting_client_get_name },
+	{ "get_map", scripting_client_get_map },
 	{ "get_position", scripting_client_get_position },
 	{ "get_angles", scripting_client_get_angles },
 	{ "send_message", scripting_client_send_message },
@@ -54,6 +57,13 @@ int scripting_client_get_name(lua_State *L) {
 	client_t *client = getclient(L);
 
 	lua_pushstring(L, client->name);
+	return 1;
+}
+
+int scripting_client_get_map(lua_State *L) {
+	client_t *client = getclient(L);
+
+	scripting_push_map(L, server.map);
 	return 1;
 }
 

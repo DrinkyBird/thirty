@@ -9,6 +9,7 @@ lua_State *L = NULL;
 
 void client_scripting_init(lua_State *L);
 void commands_scripting_init(void);
+void map_scripting_init(lua_State *L);
 
 static int fn_print(lua_State *L);
 
@@ -19,6 +20,7 @@ void scripting_init(void) {
 	lua_pushcfunction(L, fn_print);
 	lua_setglobal(L, "print");
 
+	map_scripting_init(L);
 	client_scripting_init(L);
 	commands_scripting_init();
 
