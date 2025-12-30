@@ -15,11 +15,30 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #pragma once
+#include <stdbool.h>
 
 typedef struct client_s client_t;
 
+typedef struct {
+	int argc;
+	const char **argv;
+	client_t *client;
+	void *userdata;
+} commandctx_t;
+
+typedef void (*commandfunc_t)(commandctx_t *ctx);
+
+typedef struct commanddef_s {
+	const char *name;
+	commandfunc_t func;
+	const char *helpline;
+	bool op_only;
+	void *userdata;
+} commanddef_t;
+
 void commands_init(void);
 void command_execute(client_t *client, const char *command);
+void command_register(commanddef_t *cmd);
 
 void command_tick_readline(void);
 void command_readline_shutdown(void);

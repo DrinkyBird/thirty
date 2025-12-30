@@ -38,23 +38,6 @@
 #include "server.h"
 #include "namelist.h"
 #include "log.h"
-
-typedef struct {
-	int argc;
-	const char **argv;
-	client_t *client;
-} commandctx_t;
-
-typedef void (*commandfunc_t)(commandctx_t *ctx);
-
-typedef struct commanddef_s {
-	const char *name;
-	commandfunc_t func;
-	const char *helpline;
-	bool op_only;
-} commanddef_t;
-
-static void command_register(commanddef_t *cmd);
 static void command_quick_register(const char *name, commandfunc_t func, const char *help, bool oponly);
 static void command_readline_init(void);
 
@@ -108,6 +91,7 @@ void command_quick_register(const char *name, commandfunc_t func, const char *he
 	cmd.func = func;
 	cmd.helpline = help;
 	cmd.op_only = oponly;
+	cmd.userdata = NULL;
 	command_register(&cmd);
 }
 
@@ -144,6 +128,7 @@ void command_execute(client_t *client, const char *command) {
 			ctx.argc = argc - 1;
 			ctx.argv = (const char **)args;
 			ctx.client = client;
+			ctx.userdata = command->userdata;
 
 			command->func(&ctx);
 		}

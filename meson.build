@@ -66,6 +66,7 @@ source_files = [
     'src/rng.h',
     'src/scripting.c',
     'src/scripting.h',
+    'src/scripting_commands.c',
     'src/server.c',
     'src/server.h',
     'src/str.c',
