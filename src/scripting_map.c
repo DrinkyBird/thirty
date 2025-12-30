@@ -9,6 +9,7 @@
 static int scripting_map_get_size(lua_State *L);
 static int scripting_map_get_block(lua_State *L);
 static int scripting_map_set_block(lua_State *L);
+static int scripting_map_tostring(lua_State *L);
 
 static const luaL_Reg map_methods[] = {
 	{ "get_size", scripting_map_get_size },
@@ -19,6 +20,7 @@ static const luaL_Reg map_methods[] = {
 
 static const luaL_Reg map_meta_methods[] = {
 	{ "__index",  NULL },
+	{ "__tostring",  scripting_map_tostring },
 	{ NULL, NULL }
 };
 
@@ -91,4 +93,11 @@ int scripting_map_set_block(lua_State *L) {
 	map_set(map, x, y, z, block);
 
 	return 0;
+}
+
+int scripting_map_tostring(lua_State *L) {
+	map_t *map = getmap(L);
+
+	lua_pushfstring(L, "<map '%s' @ %p>", map->name, (void *)map);
+	return 1;
 }
