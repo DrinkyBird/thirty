@@ -8,7 +8,6 @@
 
 extern lua_State *L;
 
-static int script_commandslib_register(lua_State *L);
 static int script_commands_register(lua_State *L);
 
 static void command_callback(commandctx_t *ctx);
@@ -18,15 +17,9 @@ static const luaL_Reg commandslib[] = {
 	{NULL, NULL}
 };
 
-int script_commandslib_register(lua_State *L) {
-	luaL_newlib(L, commandslib);
-
-	return 1;
-}
-
 void commands_scripting_init(void) {
-	luaL_requiref(L, "commands", script_commandslib_register, 1);
-	lua_pop(L, 1);
+	luaL_newlib(L, commandslib);
+	lua_setfield(L, -2, "commands");
 }
 
 int script_commands_register(lua_State *L) {

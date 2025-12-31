@@ -8,7 +8,7 @@ function testcmd(client)
 	print(tostring(map))
 end
 
-commands.register("luatest", testcmd)
+Thirty.commands.register("luatest", testcmd)
 
 print("Script loaded, using " .. _VERSION)
 
@@ -18,6 +18,5 @@ end
 
 for i = 0, #Thirty.blockinfo do
     local t = Thirty.blockinfo[i]
-    print(i)
     print(string.format("%d -> %d %s", i, t.true_id, t.name))
 end

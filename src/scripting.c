@@ -25,11 +25,11 @@ void scripting_init(void) {
 
 	lua_newtable(L);
 	scripting_register_blocks(L);
+	commands_scripting_init();
 	lua_setglobal(L, "Thirty");
 
 	map_scripting_init(L);
 	client_scripting_init(L);
-	commands_scripting_init();
 
 	if (luaL_dofile(L, "test.lua") != 0) {
 		scripting_handle_error(L);
