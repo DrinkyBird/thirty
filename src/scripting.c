@@ -4,12 +4,15 @@
 #include "scripting.h"
 #include "str.h"
 #include "log.h"
+#include "blocks.h"
 
 lua_State *L = NULL;
 
 void client_scripting_init(lua_State *L);
 void commands_scripting_init(void);
 void map_scripting_init(lua_State *L);
+
+static void scripting_register_blocks(lua_State *L);
 
 static int fn_print(lua_State *L);
 
@@ -19,6 +22,10 @@ void scripting_init(void) {
 
 	lua_pushcfunction(L, fn_print);
 	lua_setglobal(L, "print");
+
+	lua_newtable(L);
+	scripting_register_blocks(L);
+	lua_setglobal(L, "Thirty");
 
 	map_scripting_init(L);
 	client_scripting_init(L);
@@ -31,6 +38,44 @@ void scripting_init(void) {
 
 void scripting_shutdown(void) {
 	lua_close(L);
+}
+
+void scripting_register_blocks(lua_State *L) {
+	// block IDs
+	lua_newtable(L);
+	for (int i = 0; i < num_blocks; i++) {
+		lua_pushinteger(L, i);
+		lua_setfield(L, -2, blockinfo[i].name);
+	}
+	lua_setfield(L, -2, "blocks");
+
+	// block info
+	lua_newtable(L);
+	for (int i = 0; i < num_blocks; i++) {
+		lua_newtable(L);
+
+		lua_pushinteger(L, i);
+		lua_setfield(L, -2, "id");
+		lua_pushinteger(L, i);
+		lua_setfield(L, -2, "true_id");
+		lua_pushstring(L, blockinfo[i].name);
+		lua_setfield(L, -2, "name");
+		lua_pushinteger(L, blockinfo[i].colour);
+		lua_setfield(L, -2, "colour");
+		lua_pushboolean(L, blockinfo[i].solid);
+		lua_setfield(L, -2, "solid");
+		lua_pushboolean(L, blockinfo[i].block_light);
+		lua_setfield(L, -2, "block_light");
+		lua_pushboolean(L, blockinfo[i].liquid);
+		lua_setfield(L, -2, "liquid");
+		lua_pushboolean(L, blockinfo[i].op_only_place);
+		lua_setfield(L, -2, "op_only_place");
+		lua_pushboolean(L, blockinfo[i].op_only_break);
+		lua_setfield(L, -2, "op_only_break");
+
+		lua_rawseti(L, -2, i);
+	}
+	lua_setfield(L, -2, "blockinfo");
 }
 
 int fn_print(lua_State *L) {

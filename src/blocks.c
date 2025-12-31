@@ -45,6 +45,10 @@ void blocks_init(void) {
 		blockinfo[i].colour = 0xFF00FF;
 	}
 
+#define X(n) blockinfo[n].name = #n;
+#include "blocks.inc"
+#undef X
+
 	blockinfo[air].solid = false;
 	blockinfo[air].block_light = false;
 	blockinfo[grass].random_tickfunc = blocktick_grass_die;
