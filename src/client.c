@@ -83,6 +83,7 @@ void client_init(client_t *client, int fd, size_t idx) {
 	client->y = map_get_top(server.map, (size_t)client->x, (size_t)client->z) + 2.0f;
 	client->yaw = 0.0f;
 	client->pitch = 0.0f;
+	client->reach = 5.0f;
 	client->spawned = false;
 	client->num_extensions = 0;
 	client->extensions = NULL;
@@ -462,6 +463,7 @@ void client_handle_in_buffer(client_t *client, buffer_t *in_buffer, size_t r) {
 				const uint8_t current = map_get(server.map, x, y, z);
 
 				bool can_perform = true;
+				const float dist = util_distance(client->x, client->y, client->z, (float)x + 0.5f, (float)y + 0.5f, (float)z + 0.5f);
 
 				if (!client->is_op) {
 					if (is_break) {
@@ -470,6 +472,9 @@ void client_handle_in_buffer(client_t *client, buffer_t *in_buffer, size_t r) {
 					else {
 						can_perform = !blockinfo[current].op_only_break && !blockinfo[block].op_only_place;
 					}
+				}
+				else if (dist > client->reach + 1.0f) {
+					can_perform = false;
 				}
 
 				if (!can_perform) {

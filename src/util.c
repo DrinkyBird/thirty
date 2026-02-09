@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <math.h>
 #include "util.h"
 #include "config.h"
 #include "log.h"
@@ -33,6 +34,13 @@
 #endif
 
 extern bool args_disable_colour;
+
+float util_distance(float x0, float y0, float z0, float x1, float y1, float z1) {
+	const float dx = x0 - x1;
+	const float dy = y0 - y1;
+	const float dz = z0 - z1;
+	return sqrtf(fmaf(dx, dx, fmaf(dy, dy, dz * dz)));
+}
 
 double get_time_s(void) {
 	struct timespec ts;

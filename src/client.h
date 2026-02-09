@@ -62,6 +62,8 @@ typedef struct client_s {
 	float x, y, z;
 	float yaw, pitch;
 
+	float reach;
+
 	size_t num_extensions;
 	cpeext_t *extensions;
 
