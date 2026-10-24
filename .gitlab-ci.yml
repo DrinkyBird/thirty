@@ -18,7 +18,7 @@ build:
     matrix:
       - CC: [ gcc, clang ]
         DISTRO: [ debian, alpine, tumbleweed ]
-        ARCH: [ x86_64, aarch64 ]
+        ARCH: [ x86_64 ]
 
 scan-build:
   stage: check
@@ -33,7 +33,7 @@ scan-build:
   parallel:
     matrix:
       - DISTRO: [ debian, alpine, tumbleweed ]
-        ARCH: [ x86_64, aarch64 ]
+        ARCH: [ x86_64 ]
   artifacts:
     paths:
       - build/meson-logs/scanbuild/*
@@ -44,7 +44,7 @@ scan-build:
   stage: deploy
   parallel:
     matrix:
-      - ARCH: [ x86_64, aarch64 ]
+      - ARCH: [ x86_64 ]
   tags:
     - $ARCH
   image:
