@@ -6,7 +6,7 @@ stages:
 
 build:
   stage: build
-  image: registry.firestick.games/sean/thirty-ci-images/$DISTRO:latest
+  image: registry.drinkybird.net/sean/thirty-ci-images/$DISTRO:latest
   variables:
     CC: $CC
   tags:
@@ -22,7 +22,7 @@ build:
 
 scan-build:
   stage: check
-  image: registry.firestick.games/sean/thirty-ci-images/$DISTRO:latest
+  image: registry.drinkybird.net/sean/thirty-ci-images/$DISTRO:latest
   variables:
     CC: clang
   tags:

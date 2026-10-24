@@ -291,7 +291,7 @@ void command_version(commandctx_t *ctx) {
 	}
 #endif
 	client_send_message(ctx->client, msgtype_chat, "Thirty is licenced under the GNU AGPL v3 or later, and its");
-	client_send_message(ctx->client, msgtype_chat, "source is available at https://dev.firestick.games/sean/thirty");
+	client_send_message(ctx->client, msgtype_chat, "source is available at https://dev.drinkybird.net/sean/thirty");
 }
 
 void command_help(commandctx_t *ctx) {

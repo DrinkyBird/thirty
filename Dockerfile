@@ -1,4 +1,4 @@
-FROM registry.firestick.games/sean/thirty-ci-images/tumbleweed:latest AS build
+FROM registry.drinkybird.net/sean/thirty-ci-images/tumbleweed:latest AS build
 
 COPY . /thirty
 
