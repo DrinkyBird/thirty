@@ -4,15 +4,15 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.sys }}
 
     strategy:
       fail-fast: false
 
       matrix:
-        os: [windows-2025]
         include:
-          - os: windows-2025
+          - { sys: CLANG64, os: windows-2025 }
+          - { sys: CLANGARM64, os: windows-11-arm }
 
     defaults:
       run:
@@ -22,9 +22,9 @@ jobs:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
     - uses: msys2/setup-msys2@v2
       with:
-        msystem: CLANG64
+        msystem: ${{ matrix.sys }}
         update: true
-        install: mingw-w64-clang-x86_64-toolchain mingw-w64-clang-x86_64-meson mingw-w64-clang-x86_64-zlib mingw-w64-clang-x86_64-ninja mingw-w64-clang-x86_64-readline mingw-w64-clang-x86_64-curl
+        pacboy: toolchain:p meson:p zlib:p ninja:p readline:p curl:p
 
     - name: Configure
       run: >
