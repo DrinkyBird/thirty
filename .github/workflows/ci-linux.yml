@@ -23,7 +23,7 @@ jobs:
       shell: bash
       run: |
         sudo apt-get update
-        sudo apt-get install build-essential libomp-dev meson ninja-build zlib1g-dev libcurl4-gnutls-dev pkgconf libreadline-dev
+        sudo apt-get install build-essential clang libomp-dev meson ninja-build zlib1g-dev libcurl4-gnutls-dev pkgconf libreadline-dev
 
     - name: Configure
       run: >
