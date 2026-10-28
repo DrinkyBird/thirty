@@ -1,0 +1,33 @@
+name: Linux build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        os: [ubuntu-24.04, ubuntu-24.04-arm]
+        compiler: [gcc, clang]
+        include:
+          - os: ubuntu-24.04
+          - os: ubuntu-24.04-arm
+
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install build-essential clang libomp-dev meson ninja-build zlib1g-dev libcurl4-gnutls-dev pkgconf libreadline-dev
+
+    - name: Configure
+      run: >
+        CC=${{ matrix.compiler }} meson setup -Dbuildtype=release builddir
+
+    - name: Build
+      run: cd builddir && meson compile

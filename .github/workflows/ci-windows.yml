@@ -1,0 +1,35 @@
+name: Windows build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        include:
+          - { sys: UCRT64, os: windows-2025 }
+          - { sys: CLANG64, os: windows-2025 }
+          - { sys: CLANGARM64, os: windows-11-arm }
+
+    defaults:
+      run:
+        shell: msys2 {0}
+
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: ${{ matrix.sys }}
+        update: true
+        pacboy: toolchain:p meson:p zlib:p ninja:p readline:p curl:p
+
+    - name: Configure
+      run: >
+        meson setup -Dbuildtype=release builddir
+
+    - name: Build
+      run: cd builddir && meson compile
