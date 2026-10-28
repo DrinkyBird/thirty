@@ -19,7 +19,7 @@ jobs:
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-    - name: Install dependencies for Linux
+    - name: Install dependencies
       shell: bash
       run: |
         sudo apt-get update
