@@ -1,0 +1,31 @@
+name: macOS build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        os: [macos-26-intel, macos-26]
+        include:
+          - os: macos-26-intel
+          - os: macos-26
+
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+    - name: Install dependencies for Linux
+      shell: bash
+      run: |
+        brew install meson ninja readline
+
+    - name: Configure
+      run: >
+        meson setup -Dbuildtype=release builddir
+
+    - name: Build
+      run: cd builddir && meson compile
