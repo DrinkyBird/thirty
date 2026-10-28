@@ -4,13 +4,14 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ${{ matrix.sys }}
+    runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
 
       matrix:
         include:
+          - { sys: UCRT64, os: windows-2025 }
           - { sys: CLANG64, os: windows-2025 }
           - { sys: CLANGARM64, os: windows-11-arm }
 
