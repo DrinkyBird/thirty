@@ -1,0 +1,30 @@
+name: Windows build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        os: [windows-2025]
+        include:
+          - os: windows-2025
+
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: UCRT64
+        update: true
+        install: mingw-w64-clang-x86_64-toolchain mingw-w64-clang-x86_64-meson mingw-w64-clang-x86_64-zlib mingw-w64-clang-x86_64-ninja mingw-w64-clang-x86_64-readline mingw-w64-clang-x86_64-curl
+
+    - name: Configure
+      run: >
+        meson setup -Dbuildtype=release builddir
+
+    - name: Build
+      run: cd builddir && meson compile
