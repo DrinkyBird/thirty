@@ -11,6 +11,7 @@ jobs:
 
       matrix:
         os: [ubuntu-24.04, ubuntu-24.04-arm]
+        compiler: [gcc, clang]
         include:
           - os: ubuntu-24.04
           - os: ubuntu-24.04-arm
@@ -26,7 +27,7 @@ jobs:
 
     - name: Configure
       run: >
-        meson setup -Dbuildtype=release builddir
+        CC=${{ matrix.compiler }} meson setup -Dbuildtype=release builddir
 
     - name: Build
       run: cd builddir && meson compile
