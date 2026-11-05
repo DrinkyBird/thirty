@@ -30,8 +30,6 @@ version_h = configure_file(input: 'version.h.in', output: 'version.h', configura
 
 hg_identify = vcs_tag(command: ['hg', 'identify', '-T', '{ifeq(latesttag, "null", "", latesttag)}{ifeq(latesttagdistance, 0, "", "+{latesttagdistance}.{node|short}")}{if(topic, "-{topic}")}', '-r', '.'], input: 'hginfo.h.in', output: 'hginfo.h', replace_string: '@hg_changeset@')
 
-windows_rc = windows.compile_resources('src/win32/thirty.rc', depend_files: version_h, depends: hg_identify, include_directories: '.')
-
 source_files = [
     'src/blocks.c',
     'src/blocks.h',
@@ -84,8 +82,6 @@ source_files = [
     'lib/stb_image_write.c',
     'lib/stb_image_write.h',
 
-    windows_rc,
-
     version_h, hg_identify
 ]
 
@@ -107,6 +103,9 @@ if build_machine.system() == 'windows'
     deps += cc.find_library('bcrypt')
     deps += cc.find_library('ws2_32')
     add_project_arguments('-D_USE_MATH_DEFINES', language: 'c')
+	
+    windows_rc = windows.compile_resources('src/win32/thirty.rc', depend_files: version_h, depends: hg_identify, include_directories: '.')
+    source_files += windows_rc
 else
     deps += cc.find_library('m')
 endif
