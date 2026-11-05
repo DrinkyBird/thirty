@@ -229,6 +229,7 @@ void mapgen_grow_tree(map_t *map, rng_t *rng, int x, int y, int z, int height) {
 void mapgen_percent_init(mapgen_percent_t *pct, const char *prefix, size_t total) {
 	memset(pct, 0, sizeof(*pct));
 	strncpy(pct->prefix, prefix, sizeof(pct->prefix));
+	pct->prefix[sizeof(pct->prefix) - 1] = '\0';
 	pct->total = total;
 }
 

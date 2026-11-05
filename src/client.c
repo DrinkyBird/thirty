@@ -593,7 +593,7 @@ void client_handle_in_buffer(client_t *client, buffer_t *in_buffer, size_t r) {
 }
 
 bool client_verify_key(char name[65], char key[65]) {
-	char work[128];
+	char work[129];
 	snprintf(work, sizeof(work), "%s%s", server.salt, name);
 
 	uint8_t hash[16];
