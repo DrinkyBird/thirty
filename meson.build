@@ -122,6 +122,9 @@ if cc.has_function('alloca', prefix: '#include <alloca.h>')
     add_project_arguments('-DUSE_ALLOCA_H', language: 'c')
 endif
 
+sizeof_size_t = cc.compute_int('sizeof(size_t)')
+add_project_arguments('-DSIZEOF_SIZE_T=' + sizeof_size_t.to_string(), language: 'c')
+
 libdir = include_directories('lib')
 
 executable('thirty', source_files, dependencies: deps, include_directories: libdir, c_args: ccflags, install: true)

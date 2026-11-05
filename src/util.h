@@ -18,6 +18,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 #define util_max(x, y) (((x) > (y)) ? (x) : (y))
 #define util_min(x, y) (((x) < (y)) ? (x) : (y))
@@ -28,6 +29,12 @@
 
 #define util_fixed2degrees(value) ((float)(((float)(value)) * 360.0f / 256.0f))
 #define util_degrees2fixed(value) ((int8_t)(((float)(value)) / 360.0f * 256.0f))
+
+#if SIZEOF_SIZE_T == 4
+#define PRINT_SIZE_T PRIu32
+#elif SIZEOF_SIZE_T == 8
+#define PRINT_SIZE_T PRIu64
+#endif
 
 float util_distance(float x0, float y0, float z0, float x1, float y1, float z1);
 

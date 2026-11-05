@@ -20,10 +20,8 @@
 #include <pthread.h>
 #include <math.h>
 #include <stdarg.h>
-#include "client.h"
-
 #include <inttypes.h>
-
+#include "client.h"
 #include "server.h"
 #include "buffer.h"
 #include "map.h"
@@ -40,6 +38,7 @@
 #include "log.h"
 #include "version.h"
 #include "commands.h"
+#include "util.h"
 
 #define BUFFER_SIZE (32 * 1024)
 #define PING_INTERVAL (1.0)
@@ -580,7 +579,7 @@ void client_handle_in_buffer(client_t *client, buffer_t *in_buffer, size_t r) {
 			}
 
 			default: {
-				log_printf(log_error, "client %zu (%s) sent unknown packet 0x%02x at offset %zu", client->idx, client->name, packet_id, pos);
+				log_printf(log_error, "client %" PRINT_SIZE_T " (%s) sent unknown packet 0x%02x at offset %" PRINT_SIZE_T, client->idx, client->name, packet_id, pos);
 				if (config.debug.dump_connection_packets) {
 					log_printf(log_info, "check packets/p_%" PRId64 "_%" PRIu64 "_%" PRIu64 ".bin", (int64_t)server.starttime, client->debug_id, next_recv_id - 1);
 				}
