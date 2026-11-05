@@ -19,6 +19,8 @@ project('thirty', 'c',
     default_options: [ 'c_std=gnu11', 'warning_level=3' ]
 )
 
+windows = import('windows')
+
 cc = meson.get_compiler('c')
 ccflags = ['-ftree-vectorize']
 
@@ -27,6 +29,8 @@ version_h = configure_file(input: 'version.h.in', output: 'version.h', configura
 })
 
 hg_identify = vcs_tag(command: ['hg', 'identify', '-T', '{ifeq(latesttag, "null", "", latesttag)}{ifeq(latesttagdistance, 0, "", "+{latesttagdistance}.{node|short}")}{if(topic, "-{topic}")}', '-r', '.'], input: 'hginfo.h.in', output: 'hginfo.h', replace_string: '@hg_changeset@')
+
+windows_rc = windows.compile_resources('src/win32/thirty.rc', depend_files: version_h, depends: hg_identify, include_directories: '.')
 
 source_files = [
     'src/blocks.c',
@@ -79,6 +83,8 @@ source_files = [
     'lib/sha1.h',
     'lib/stb_image_write.c',
     'lib/stb_image_write.h',
+
+    windows_rc,
 
     version_h, hg_identify
 ]

@@ -1,0 +1,31 @@
+#include <winres.h>
+#include "hginfo.h"
+
+#define RC_VERSION 0,1,0,0
+
+101 ICON "thirty.ico"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     RC_VERSION
+PRODUCTVERSION  RC_VERSION
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "CompanyName",        "Sean Baggaley"
+            VALUE "FileDescription",    "Thirty"
+            VALUE "FileVersion",        RC_VERSION
+            VALUE "InternalName",       "thirty"
+            VALUE "LegalCopyright",     "Copyright (C) Sean Baggaley 2026"
+            VALUE "OriginalFilename",   "thirty.exe"
+            VALUE "ProductName",        "thirty.exe"
+            VALUE "ProductVersion",     HG_CHANGESET_HASH ".0"
+        END
+    END
+
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1252
+    END
+END
