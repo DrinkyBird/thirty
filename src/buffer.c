@@ -315,7 +315,7 @@ void buffer_write_mcstr(buffer_t *buffer, const char *data, bool filter) {
 
 	if (filter) {
 		for (size_t i = 0; i < 64; i++) {
-			if (s[i] < 0) {
+			if ((signed char)(s[i]) < 0) {
 				s[i] = '?';
 			}
 		}

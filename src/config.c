@@ -53,7 +53,7 @@ static void trim(char *p) {
 	size_t len = strlen(p);
 	size_t start = 0;
 	for (; start < len; start++) {
-		if (!isspace(p[start])) {
+		if (!isspace((int)p[start])) {
 			break;
 		}
 	}
@@ -63,7 +63,7 @@ static void trim(char *p) {
 	len = strlen(p);
 
 	for (ssize_t i = (ssize_t)len - 1; i >= 0; i--) {
-		if (isspace(p[i])) {
+		if (isspace((int)p[i])) {
 			p[i] = 0;
 		}
 		else {
