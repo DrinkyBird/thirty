@@ -15,7 +15,7 @@ BEGIN
         BEGIN
             VALUE "CompanyName",        "Sean Baggaley"
             VALUE "FileDescription",    "Thirty"
-            VALUE "FileVersion",        RC_VERSION
+            VALUE "FileVersion",        HG_CHANGESET_HASH ".0"
             VALUE "InternalName",       "thirty"
             VALUE "LegalCopyright",     "Copyright (C) Sean Baggaley 2026"
             VALUE "OriginalFilename",   "thirty.exe"
